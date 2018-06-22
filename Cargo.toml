@@ -1,0 +1,11 @@
+[package]
+name = "actix-mq-network"
+version = "0.1.0"
+authors = ["Evgeny Ukhanov <mrlsd@ya.ru>"]
+
+[dependencies]
+actix = "0.7"
+tokio = "0.1"
+tokio-codec = "0.1"
+tokio-io = "0.1"
+tokio-tcp = "0.1"
