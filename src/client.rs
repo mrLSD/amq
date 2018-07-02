@@ -1,17 +1,22 @@
 #[macro_use]
 extern crate actix;
+extern crate byteorder;
+extern crate bytes;
 extern crate futures;
 extern crate serde;
 extern crate serde_json;
 extern crate tokio_codec;
 extern crate tokio_io;
 extern crate tokio_tcp;
+#[macro_use]
+extern crate serde_derive;
 
 mod codec;
 
 use actix::prelude::*;
 use futures::Future;
 use std::str::FromStr;
+use std::time::Duration;
 use std::{io, net, process, thread};
 use tokio_codec::FramedRead;
 use tokio_io::io::WriteHalf;
@@ -57,7 +62,7 @@ fn main() {
 }
 
 struct MqClient {
-    framed: actix::io::FramedWrite<WriteHalf<TcpStream>, codec::ClientChatCodec>,
+    framed: actix::io::FramedWrite<WriteHalf<TcpStream>, codec::ClientMqCodec>,
 }
 
 #[derive(Message)]
@@ -84,14 +89,16 @@ impl Actor for MqClient {
 impl MqClient {
     fn hb(&self, ctx: &mut Context<Self>) {
         ctx.run_later(Duration::new(1, 0), |act, ctx| {
-            act.framed.write(codec::ChatRequest::Ping);
+            act.framed.write(codec::MqRequest::Ping);
             act.hb(ctx);
         });
     }
 }
 
+impl actix::io::WriteHandler<io::Error> for MqClient {}
+
 /// Handle stdin commands
-impl Handler<ClientCommand> for ChatClient {
+impl Handler<ClientCommand> for MqClient {
     type Result = ();
 
     fn handle(&mut self, msg: ClientCommand, _: &mut Context<Self>) {
@@ -101,20 +108,27 @@ impl Handler<ClientCommand> for ChatClient {
         if m.starts_with('/') {
             let v: Vec<&str> = m.splitn(2, ' ').collect();
             match v[0] {
-                "/list" => {
-                    self.framed.write(codec::ChatRequest::List);
+                "/ping" => {
+                    self.framed.write(codec::MqRequest::Ping);
                 }
-                "/join" => {
-                    if v.len() == 2 {
-                        self.framed.write(codec::ChatRequest::Join(v[1].to_owned()));
-                    } else {
-                        println!("!!! room name is required");
-                    }
-                }
-                _ => println!("!!! unknown command"),
+                _ => println!(">> unknown command"),
             }
         } else {
-            self.framed.write(codec::ChatRequest::Message(m.to_owned()));
+            self.framed.write(codec::MqRequest::Message(m.to_owned()));
+        }
+    }
+}
+
+/// Server communication
+impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
+    fn handle(&mut self, msg: codec::MqResponse, _: &mut Context<Self>) {
+        match msg {
+            codec::MqResponse::Message(ref msg) => {
+                println!("message: {}", msg);
+            }
+            codec::MqResponse::Pong => {
+                println!("PONG");
+            }
         }
     }
 }
