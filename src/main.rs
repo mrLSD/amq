@@ -1,6 +1,7 @@
 #![allow(unused_imports)]
 #[macro_use]
 extern crate actix;
+extern crate futures;
 extern crate tokio;
 extern crate tokio_io;
 extern crate tokio_tcp;
@@ -8,8 +9,10 @@ extern crate tokio_tcp;
 mod server;
 
 use actix::prelude::*;
+use futures::Stream;
 use server::MqServer;
 use std::net;
+use std::str::FromStr;
 use tokio_tcp::{TcpListener, TcpStream};
 
 /// Define tcp server that will accept incoming tcp
@@ -40,6 +43,23 @@ fn main() {
     actix::System::run(|| {
         // Start server actor
         let server = MqServer::default().start();
+
+        // Create server listener
+        let addr = net::SocketAddr::from_str("127.0.0.1:3000").unwrap();
+        let listener = TcpListener::bind(&addr).unwrap();
+
+        // Our MQ server `Server` is an actor, first we need to start it
+        // and then add stream on incoming tcp connections to it.
+        // TcpListener::incoming() returns stream of the (TcpStream, net::SocketAddr)
+        // items So to be able to handle this events `Server` actor has to implement
+        // stream handler `StreamHandler<(TcpStream, net::SocketAddr), io::Error>`
+        Server::create(|ctx| {
+            ctx.add_message_stream(listener.incoming().map_err(|_| ()).map(|st| {
+                let addr = st.peer_addr().unwrap();
+                TcpConnect(st, addr)
+            }));
+            Server { server: server }
+        });
 
         println!("Running chat MQ server...");
     });
