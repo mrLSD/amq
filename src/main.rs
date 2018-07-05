@@ -8,9 +8,9 @@ extern crate tokio_tcp;
 mod server;
 
 use actix::prelude::*;
+use server::MqServer;
 use std::net;
 use tokio_tcp::{TcpListener, TcpStream};
-use server::MqServer;
 
 /// Define tcp server that will accept incoming tcp
 /// connection and create MQ actors.
@@ -27,4 +27,20 @@ impl Actor for Server {
 #[derive(Message)]
 struct TcpConnect(pub TcpStream, pub net::SocketAddr);
 
-fn main() {}
+// Handle stream of TcpStream's
+impl Handler<TcpConnect> for Server {
+    /// this is response for message, which is defined by `ResponseType` trait
+    /// in this case we just return unit.
+    type Result = ();
+
+    fn handle(&mut self, _msg: TcpConnect, _: &mut Context<Self>) {}
+}
+
+fn main() {
+    actix::System::run(|| {
+        // Start server actor
+        let server = MqServer::default().start();
+
+        println!("Running chat MQ server...");
+    });
+}
