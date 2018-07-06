@@ -1,3 +1,4 @@
+#![allow(unused_imports)]
 #[macro_use]
 extern crate actix;
 extern crate tokio;
@@ -7,8 +8,9 @@ extern crate tokio_tcp;
 mod server;
 
 use actix::prelude::*;
-use tokio_tcp::{TcpListener, TcpStream};
 use std::net;
+use tokio_tcp::{TcpListener, TcpStream};
+use server::MqServer;
 
 /// Define tcp server that will accept incoming tcp
 /// connection and create MQ actors.
@@ -25,6 +27,4 @@ impl Actor for Server {
 #[derive(Message)]
 struct TcpConnect(pub TcpStream, pub net::SocketAddr);
 
-
-fn main() {
-}
+fn main() {}
