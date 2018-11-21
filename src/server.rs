@@ -18,19 +18,6 @@ pub struct MqServer {
     settigns: NodeAppConfig,
 }
 
-/// Basic MQ Data
-#[derive(Debug)]
-pub struct MqData {
-    pub from: PublicKey,
-    pub to: PublicKey,
-    pub signature: Option<Signature>,
-    pub name: Option<String>,
-    pub protocol: codec::MessageProtocol,
-    pub time: SystemTime,
-    pub nonce: Option<cipher::Nonce>,
-    pub body: String,
-}
-
 impl MqServer {
     pub fn new(cfg: NodeAppConfig) -> MqServer {
         MqServer {
@@ -65,13 +52,17 @@ impl actix::Message for Connect {
 #[derive(Message)]
 pub struct Disconnect(pub PublicKey);
 
-/// Send message to specific node
-#[derive(Message)]
+/// Basic MQ Message Data
+#[derive(Message, Debug)]
 pub struct MqMessage {
-    /// Node identifier
-    pub pub_key: PublicKey,
-    /// Peer message
-    pub msg: String,
+    pub from: PublicKey,
+    pub to: PublicKey,
+    pub signature: Option<Signature>,
+    pub name: Option<String>,
+    pub protocol: codec::MessageProtocol,
+    pub time: SystemTime,
+    pub nonce: Option<cipher::Nonce>,
+    pub body: String,
 }
 
 /// Ping message for specific client
@@ -137,9 +128,9 @@ impl Handler<MqMessage> for MqServer {
 
     fn handle(&mut self, msg: MqMessage, _: &mut Context<Self>) {
         println!("Handler<Message>");
-        if let Some(addr) = self.sessions.get(&msg.pub_key) {
-            let message: String = format!("Response message for: {:?}", msg.msg);
-            addr.do_send(session::MqSessionMessage(message.to_owned()))
+        if let Some(addr) = self.sessions.get(&msg.to) {
+            let message: String = format!("Response message for: {:#?}", msg);
+            addr.do_send(session::MqSessionMessage(message))
         }
     }
 }

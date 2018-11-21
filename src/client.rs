@@ -181,11 +181,22 @@ impl Handler<ClientCommand> for MqClient {
                                 protocol: codec::MessageProtocol::ReqRep,
                                 time: SystemTime::now(),
                                 nonce: None,
-                                body: "".to_owned(),
+                                body: "message for client1".to_owned(),
                             };
                             self.framed.write(codec::MqRequest::Message(msg));
                         }
-                        "client2" => {}
+                        "client2" => {
+                            let msg = codec::MessageData {
+                                to: client2_pk,
+                                signature: None,
+                                name: None,
+                                protocol: codec::MessageProtocol::ReqRep,
+                                time: SystemTime::now(),
+                                nonce: None,
+                                body: "message for client2".to_owned(),
+                            };
+                            self.framed.write(codec::MqRequest::Message(msg));
+                        }
                         _ => println!(">> Wrong /reqrep command. For help print: /help"),
                     }
                 }
