@@ -8,9 +8,10 @@ use crate::types::{ClientAppConfig, ClientConfig};
 
 use actix::prelude::*;
 use futures::{stream::once, Future};
+use serde_derive::{Deserialize, Serialize};
 use serde_json as json;
-use sodiumoxide::crypto::box_;
 use sodiumoxide::crypto::sign::ed25519::PublicKey;
+use sodiumoxide::crypto::{box_, sign::ed25519};
 use std::str::FromStr;
 use std::time::Duration;
 use std::time::SystemTime;
@@ -53,6 +54,17 @@ fn read_config() -> ClientConfig {
 }
 
 fn main() {
+    let mut seedbuf = [10; 32];
+    let seed = box_::Seed(seedbuf);
+    let (pk, sk) = box_::keypair_from_seed(&seed);
+    println!("{:#?}", sign::to_hex(&pk[..]));
+    println!("{:#?}\n", sign::to_hex(&sk[..]));
+
+    let seed = ed25519::Seed(seedbuf);
+    let (pk, sk) = ed25519::keypair_from_seed(&seed);
+    println!("{:#?}", sign::to_hex(&pk[..]));
+    println!("{:#?}\n", sign::to_hex(&sk[..]));
+
     check_commands();
     let client_config = ClientAppConfig::new(&read_config());
 
@@ -103,6 +115,13 @@ fn main() {
 struct MqClient {
     framed: actix::io::FramedWrite<WriteHalf<TcpStream>, codec::ClientMqCodec>,
     settings: ClientAppConfig,
+}
+
+/// Struct for client message
+#[derive(Debug, Deserialize, Serialize)]
+struct ClientMessageData {
+    title: String,
+    amount: i32,
 }
 
 #[derive(Message)]
@@ -179,6 +198,12 @@ impl Handler<ClientCommand> for MqClient {
                     }
                     match v[1] {
                         "client1" => {
+                            let msg_data = json::to_string(&ClientMessageData {
+                                title: "message for client1".to_owned(),
+                                amount: 100,
+                            })
+                            .expect("Message should be serialize to JSON");
+
                             let mut msg = codec::MessageData {
                                 to: client1_pk,
                                 signature: None,
@@ -186,7 +211,7 @@ impl Handler<ClientCommand> for MqClient {
                                 protocol: codec::MessageProtocol::ReqRep,
                                 time: SystemTime::now(),
                                 nonce: None,
-                                body: "message for client1".to_owned(),
+                                body: msg_data,
                             };
 
                             if self.settings.message.encode {
@@ -194,6 +219,17 @@ impl Handler<ClientCommand> for MqClient {
                                 let nonce = box_::gen_nonce();
                                 let encoded_msg =
                                     box_::seal(&msg.body.as_bytes(), &nonce, &pk, &sk);
+
+                                println!(
+                                    "PubKey length: {:#?}",
+                                    self.settings.secret_key[..].len()
+                                );
+                                println!("PubKey seal length: {:#?}", sk[..].len());
+                                println!(
+                                    "PubKey length: {:#?}",
+                                    sign::to_hex(&self.settings.secret_key[..])
+                                );
+                                println!("PubKey seal length: {:#?}", sign::to_hex(&sk[..]));
 
                                 msg.body = sign::to_hex(&encoded_msg);
                                 msg.nonce = Some(nonce);
@@ -212,6 +248,12 @@ impl Handler<ClientCommand> for MqClient {
                             self.framed.write(codec::MqRequest::Message(msg));
                         }
                         "client2" => {
+                            let msg_data = json::to_string(&ClientMessageData {
+                                title: "message for client2".to_owned(),
+                                amount: 200,
+                            })
+                            .expect("Message should be serialize to JSON");
+
                             let mut msg = codec::MessageData {
                                 to: client2_pk,
                                 signature: None,
@@ -219,7 +261,7 @@ impl Handler<ClientCommand> for MqClient {
                                 protocol: codec::MessageProtocol::ReqRep,
                                 time: SystemTime::now(),
                                 nonce: None,
-                                body: "message for client2".to_owned(),
+                                body: msg_data,
                             };
 
                             if self.settings.message.encode {
@@ -298,6 +340,9 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
                 let is_verified = msg.verify();
                 println!("message: {:#?}", msg);
                 println!("is verified: {:#?}", is_verified);
+
+                // Encode message
+                if self.settings.message.encode {}
 
                 // Send message response data
                 self.framed.write(codec::MqRequest::MessageResponse(
