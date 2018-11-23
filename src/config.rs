@@ -2,6 +2,7 @@ use crate::types::{ClientConfig, ClientMessageConfig, ClientNodeConfig, NodeConf
 use std::env;
 use std::fs;
 use toml;
+use uuid::Uuid;
 
 mod sign;
 mod types;
@@ -15,18 +16,21 @@ enum AppConfigType {
 /// Generate config data by specific ty[e
 fn generate_config_date(config_type: AppConfigType) -> String {
     let (pk, sk) = sign::gen_keypair();
+    let (box_pk, box_sk) = sign::gen_box_keypair();
 
     match config_type {
         AppConfigType::Client => {
             let cfg = ClientConfig {
+                id: Uuid::new_v4().to_string(),
                 public_key: sign::to_hex_pk(&pk),
                 secret_key: sign::to_hex_sk(&sk),
                 node: ClientNodeConfig {
-                    public_key: sign::to_hex_pk(&pk),
                     ip: "0.0.0.0".to_string(),
                     port: 3030,
                 },
                 message: ClientMessageConfig {
+                    public_key: sign::to_hex(&box_pk[..]),
+                    secret_key: sign::to_hex(&box_sk[..]),
                     sign: true,
                     encode: false,
                 },

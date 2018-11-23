@@ -34,3 +34,5 @@ rand = "0.5"
 sodiumoxide = "0.2"
 hex = "0.3"
 toml = "0.4"
+
+uuid = { version = "0.7", features = ["v4"] }

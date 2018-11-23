@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use hex;
 use sodiumoxide::crypto::{
+    box_,
     sign::ed25519,
     sign::ed25519::{PublicKey, SecretKey, Seed, Signature},
 };
@@ -30,6 +31,11 @@ pub fn gen_keypair() -> (PublicKey, SecretKey) {
     ed25519::gen_keypair()
 }
 
+/// Generate box_ keypair for message encoding/decoding
+pub fn gen_box_keypair() -> (box_::PublicKey, box_::SecretKey) {
+    box_::gen_keypair()
+}
+
 /// Verifies that `data` is signed with a secret key corresponding to the
 /// given public key.
 pub fn verify(sig: &Signature, data: &[u8], pub_key: &PublicKey) -> bool {
@@ -50,6 +56,18 @@ pub fn to_hex(data: &[u8]) -> String {
 pub fn from_string_pk(hex: &String) -> PublicKey {
     let pk = hex::decode(hex).unwrap();
     PublicKey::from_slice(&pk).unwrap()
+}
+
+/// Return Box PublicKey from hex string
+pub fn from_string_box_pk(hex: &String) -> box_::PublicKey {
+    let pk = hex::decode(hex).unwrap();
+    box_::PublicKey::from_slice(&pk).unwrap()
+}
+
+/// Return Box SecretKey from hex string
+pub fn from_string_box_sk(hex: &String) -> box_::SecretKey {
+    let pk = hex::decode(hex).unwrap();
+    box_::SecretKey::from_slice(&pk).unwrap()
 }
 
 /// Returns a hex representation of binary data.
