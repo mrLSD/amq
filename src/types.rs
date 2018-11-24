@@ -14,7 +14,6 @@ pub struct NodeConfig {
 /// Basic client config
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClientConfig {
-    pub id: String,
     pub public_key: String,
     pub secret_key: String,
     pub node: ClientNodeConfig,
@@ -63,7 +62,6 @@ pub struct NodeAppConfig {
 /// Client app config struct
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct ClientAppConfig {
-    pub id: String,
     pub public_key: PublicKey,
     pub secret_key: SecretKey,
     pub node: ClientAppNodeConfig,
@@ -94,7 +92,6 @@ impl NodeAppConfig {
 impl ClientAppConfig {
     pub fn new(cfg: &ClientConfig) -> Self {
         ClientAppConfig {
-            id: cfg.id.clone(),
             public_key: sign::from_string_pk(&cfg.public_key),
             secret_key: sign::from_string_sk(&cfg.secret_key),
             node: ClientAppNodeConfig {

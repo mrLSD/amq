@@ -59,6 +59,7 @@ pub struct Disconnect(pub PublicKey);
 /// Basic MQ Message Data
 #[derive(Message, Debug, Deserialize, Serialize, Clone)]
 pub struct MqMessage {
+    pub id: String,
     pub from: PublicKey,
     pub to: PublicKey,
     pub signature: Option<Signature>,
@@ -74,6 +75,7 @@ impl MqMessage {
     /// Convert message to Client message
     pub fn to_message(&self) -> codec::MessageData {
         codec::MessageData {
+            id: self.id.clone(),
             to: self.to,
             signature: self.signature,
             name: self.name.clone(),

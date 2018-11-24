@@ -10,8 +10,8 @@ use actix::prelude::*;
 use futures::{stream::once, Future};
 use serde_derive::{Deserialize, Serialize};
 use serde_json as json;
+use sodiumoxide::crypto::box_;
 use sodiumoxide::crypto::sign::ed25519::PublicKey;
-use sodiumoxide::crypto::{box_, sign::ed25519};
 use std::str::FromStr;
 use std::time::Duration;
 use std::time::SystemTime;
@@ -21,6 +21,7 @@ use tokio_io::io::WriteHalf;
 use tokio_io::AsyncRead;
 use tokio_tcp::TcpStream;
 use toml;
+use uuid::Uuid;
 
 const PING_TIME_SEC: u64 = 5;
 
@@ -54,17 +55,6 @@ fn read_config() -> ClientConfig {
 }
 
 fn main() {
-    let mut seedbuf = [10; 32];
-    let seed = box_::Seed(seedbuf);
-    let (pk, sk) = box_::keypair_from_seed(&seed);
-    println!("{:#?}", sign::to_hex(&pk[..]));
-    println!("{:#?}\n", sign::to_hex(&sk[..]));
-
-    let seed = ed25519::Seed(seedbuf);
-    let (pk, sk) = ed25519::keypair_from_seed(&seed);
-    println!("{:#?}", sign::to_hex(&pk[..]));
-    println!("{:#?}\n", sign::to_hex(&sk[..]));
-
     check_commands();
     let client_config = ClientAppConfig::new(&read_config());
 
@@ -205,6 +195,7 @@ impl Handler<ClientCommand> for MqClient {
                             .expect("Message should be serialize to JSON");
 
                             let mut msg = codec::MessageData {
+                                id: Uuid::new_v4().to_string(),
                                 to: client1_pk,
                                 signature: None,
                                 name: None,
@@ -255,6 +246,7 @@ impl Handler<ClientCommand> for MqClient {
                             .expect("Message should be serialize to JSON");
 
                             let mut msg = codec::MessageData {
+                                id: Uuid::new_v4().to_string(),
                                 to: client2_pk,
                                 signature: None,
                                 name: None,

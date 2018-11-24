@@ -43,6 +43,7 @@ pub enum MessageProtocol {
 /// Basic MQ Message Data
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MessageData {
+    pub id: String,
     pub to: PublicKey,
     pub signature: Option<Signature>,
     pub name: Option<String>,
@@ -56,6 +57,7 @@ impl MessageData {
     /// Convert message to Server message
     pub fn to_message(&self, from: &PublicKey) -> server::MqMessage {
         server::MqMessage {
+            id: self.id.clone(),
             from: *from,
             to: self.to,
             signature: self.signature,
