@@ -58,6 +58,10 @@ pub struct MqMessage {
     pub msg: String,
 }
 
+/// Ping message for specific client
+#[derive(Message)]
+pub struct MqPingClient(pub PublicKey);
+
 /// Register client
 pub struct MqRegister {
     /// Old client identifier
@@ -135,5 +139,19 @@ impl Handler<MqRegister> for MqServer {
             return MessageResult(None);
         }
         MessageResult(Some(msg.pub_key))
+    }
+}
+
+/// Handler for Ping Client message.
+impl Handler<MqPingClient> for MqServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: MqPingClient, _: &mut Context<Self>) -> Self::Result {
+        println!("Handler<MqPingClient>");
+
+        let pub_key = msg.0;
+        if let Some(addr) = self.sessions.get(&pub_key) {
+            addr.do_send(session::MqSessionPingClient(pub_key));
+        }
     }
 }

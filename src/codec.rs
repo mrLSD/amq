@@ -15,6 +15,8 @@ use serde_derive::{Deserialize, Serialize};
 pub enum MqRequest {
     /// Ping request
     Ping,
+    /// Ping client by pub_key
+    PingClient(PublicKey),
     /// Send message
     Message(String),
     /// Register request
@@ -29,6 +31,7 @@ pub enum MqResponse {
     Pong,
     /// Receive Message
     Message(String),
+    PingClient(PublicKey),
 }
 
 /// Codec for Client -> Server transport

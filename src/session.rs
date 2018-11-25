@@ -23,6 +23,10 @@ pub struct MqSessionMessage(pub String);
 #[derive(Message)]
 pub struct MqSessionDisconnect;
 
+/// Ping message for Client
+#[derive(Message)]
+pub struct MqSessionPingClient(pub PublicKey);
+
 /// `MqSession` actor is responsible for tcp peer communications.
 pub struct MqSession {
     /// MQ session NodePublicKey
@@ -94,6 +98,10 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
             }
             // we update heartbeat time on ping from peer
             MqRequest::Ping => self.hb = { Instant::now() },
+            MqRequest::PingClient(pk) => {
+                println!("MqRequest::PingClient");
+                self.addr.do_send(server::MqPingClient(pk));
+            }
             MqRequest::Register(pk) => {
                 if self.pub_key.is_none() {
                     eprintln!("Register pub_key: session pub_key not set");
@@ -150,6 +158,16 @@ impl Handler<MqSessionDisconnect> for MqSession {
 
         // Stop actor
         ctx.stop();
+    }
+}
+
+/// Handler for Clent Ping
+impl Handler<MqSessionPingClient> for MqSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: MqSessionPingClient, _: &mut Self::Context) {
+        // Send Ping message to peer
+        self.framed.write(MqResponse::PingClient(msg.0));
     }
 }
 

@@ -3,6 +3,7 @@ mod sign;
 mod types;
 
 use crate::types::{ClientAppConfig, ClientConfig};
+
 use actix::prelude::*;
 use futures::stream::once;
 use futures::Future;
@@ -165,7 +166,11 @@ impl Handler<ClientCommand> for MqClient {
                         "client2" => {}
                         _ => println!("Unknown client name. Print for help: /help"),
                     }
-                    self.framed.write(codec::MqRequest::Ping);
+                    let pk = sign::from_string_pk(
+                        &"b521a35da1439d86c8c5c9eb54e5bbef6500f53afb477a89c46d7e54dc77efaf"
+                            .to_string(),
+                    );
+                    self.framed.write(codec::MqRequest::PingClient(pk));
                 }
                 "/help" => {
                     println!(
@@ -197,6 +202,9 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
                 println!("message: {}", msg);
             }
             codec::MqResponse::Pong => {}
+            codec::MqResponse::PingClient(_) => {
+                println!("PingClient");
+            }
         }
     }
 }
