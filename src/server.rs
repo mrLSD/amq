@@ -47,7 +47,7 @@ impl actix::Message for Connect {
 
 /// Session is disconnected
 #[derive(Message)]
-pub struct Disconnect;
+pub struct Disconnect(pub PublicKey);
 
 /// Send message to specific node
 #[derive(Message)]
@@ -93,8 +93,11 @@ impl Handler<Connect> for MqServer {
 impl Handler<Disconnect> for MqServer {
     type Result = ();
 
-    fn handle(&mut self, _msg: Disconnect, _: &mut Context<Self>) {
+    fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
+        let pub_key = msg.0;
         println!("Handler<Disconnect>");
+        // Unregister session
+        self.sessions.remove(&pub_key);
     }
 }
 

@@ -68,7 +68,7 @@ impl Actor for MqSession {
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
         // notify MQ server
-        self.addr.do_send(server::Disconnect {});
+        self.addr.do_send(server::Disconnect(self.pub_key.unwrap()));
         Running::Stop
     }
 }
@@ -145,15 +145,16 @@ impl Handler<MqSessionDisconnect> for MqSession {
 
     fn handle(&mut self, _: MqSessionDisconnect, ctx: &mut Self::Context) {
         println!("Handler<MqSessionDisconnect>");
-        // notify MQ server
-        self.addr.do_send(server::Disconnect {});
+        // Notify MQ server
+        self.addr.do_send(server::Disconnect(self.pub_key.unwrap()));
 
-        // stop actor
+        // Stop actor
         ctx.stop();
     }
 }
 
 impl MqSession {
+    /// Basic Session initialisation
     pub fn new(
         addr: Addr<MqServer>,
         framed: FramedWrite<WriteHalf<TcpStream>, MqCodec>,
@@ -166,20 +167,20 @@ impl MqSession {
         }
     }
 
-    /// helper method that sends ping to client every second.
+    /// Helper method that sends ping to client every second.
     ///
-    /// also this method check heartbeats from client
+    /// Also this method check heartbeats from client
     fn hb(&self, ctx: &mut actix::Context<Self>) {
         ctx.run_later(Duration::new(PING_TIME_SEC, 0), |act, ctx| {
-            // check client heartbeats
+            // Check client heartbeats
             if Instant::now().duration_since(act.hb) > Duration::new(PING_WAIT_SEC, 0) {
-                // heartbeat timed out
+                // Heartbeat timed out
                 println!("Client heartbeat failed, disconnecting!");
 
-                // notify MQ server
-                act.addr.do_send(server::Disconnect {});
+                // Notify MQ server
+                act.addr.do_send(server::Disconnect(act.pub_key.unwrap()));
 
-                // stop actor
+                // Stop actor
                 ctx.stop();
             }
 
