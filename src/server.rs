@@ -25,7 +25,7 @@ pub struct MqData {
     pub to: PublicKey,
     pub signature: Option<Signature>,
     pub name: Option<String>,
-    pub target: codec::MessageTarget,
+    pub protocol: codec::MessageProtocol,
     pub time: SystemTime,
     pub nonce: Option<cipher::Nonce>,
     pub body: String,

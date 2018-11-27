@@ -22,7 +22,7 @@ pub enum MqRequest {
     /// Pong from client by pub_key
     PongClient(PublicKey),
     /// Send message
-    Message(String),
+    Message(MessageData),
     /// Register request
     Register(PublicKey),
 }
@@ -30,7 +30,7 @@ pub enum MqRequest {
 /// Basic MQ message target/type
 #[derive(Serialize, Deserialize, Debug)]
 #[serde(tag = "cmd", content = "data")]
-pub enum MessageTarget {
+pub enum MessageProtocol {
     /// Publish / Subscribe protocol
     PubSub,
     /// Request / Response protocol
@@ -43,7 +43,7 @@ pub struct MessageData {
     pub to: PublicKey,
     pub signature: Option<Signature>,
     pub name: Option<String>,
-    pub target: MessageTarget,
+    pub protocol: MessageProtocol,
     pub time: SystemTime,
     pub nonce: Option<cipher::Nonce>,
     pub body: String,

@@ -94,10 +94,10 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
                     return;
                 }
                 // Send message to MQ server
-                println!("Peer message: {}", message);
+                println!("Peer message: {:#?}", message);
                 self.addr.do_send(server::MqMessage {
                     pub_key: self.pub_key.unwrap(),
-                    msg: message,
+                    msg: "message".to_owned(),
                 })
             }
             // we update heartbeat time on ping from peer

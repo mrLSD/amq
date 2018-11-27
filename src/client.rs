@@ -9,6 +9,7 @@ use futures::stream::once;
 use futures::Future;
 use std::str::FromStr;
 use std::time::Duration;
+use std::time::SystemTime;
 use std::{io, net, process, thread};
 use tokio_codec::FramedRead;
 use tokio_io::io::WriteHalf;
@@ -157,7 +158,37 @@ impl Handler<ClientCommand> for MqClient {
         // we check for /sss type of messages
         if m.starts_with('/') {
             let v: Vec<&str> = m.splitn(2, ' ').collect();
+            let client1_pk = sign::from_string_pk(
+                &"b521a35da1439d86c8c5c9eb54e5bbef6500f53afb477a89c46d7e54dc77efaf".to_string(),
+            );
+
+            let client2_pk = sign::from_string_pk(
+                &"7b2e20f9c6bac2033185fe5c9952d8053ccef6af30104060f3475c9be9d40e78".to_string(),
+            );
+
             match v[0] {
+                "/reqrep" => {
+                    if v.len() < 2 {
+                        println!(">> Wrong /reqrep command. For help print: /help");
+                        return;
+                    }
+                    match v[1] {
+                        "client1" => {
+                            let msg = codec::MessageData {
+                                to: client1_pk,
+                                signature: None,
+                                name: None,
+                                protocol: codec::MessageProtocol::ReqRep,
+                                time: SystemTime::now(),
+                                nonce: None,
+                                body: "".to_owned(),
+                            };
+                            self.framed.write(codec::MqRequest::Message(msg));
+                        }
+                        "client2" => {}
+                        _ => println!(">> Wrong /reqrep command. For help print: /help"),
+                    }
+                }
                 "/ping" => {
                     if v.len() < 2 {
                         println!(">> Wrong /ping command. For help print: /help");
@@ -165,18 +196,10 @@ impl Handler<ClientCommand> for MqClient {
                     }
                     match v[1] {
                         "client1" => {
-                            let pk = sign::from_string_pk(
-                                &"b521a35da1439d86c8c5c9eb54e5bbef6500f53afb477a89c46d7e54dc77efaf"
-                                    .to_string(),
-                            );
-                            self.framed.write(codec::MqRequest::PingClient(pk));
+                            self.framed.write(codec::MqRequest::PingClient(client1_pk));
                         }
                         "client2" => {
-                            let pk = sign::from_string_pk(
-                                &"7b2e20f9c6bac2033185fe5c9952d8053ccef6af30104060f3475c9be9d40e78"
-                                    .to_string(),
-                            );
-                            self.framed.write(codec::MqRequest::PingClient(pk));
+                            self.framed.write(codec::MqRequest::PingClient(client2_pk));
                         }
                         _ => {
                             println!("Unknown client name. Print for help: /help");
@@ -193,6 +216,9 @@ impl Handler<ClientCommand> for MqClient {
 
     /help               print this help
     [CLIENT] [MESSAGE]  send message to specific client.
+                        Available clients name: client1, client2
+
+    /reqrep             send REQ/REP message to specific client.
                         Available clients name: client1, client2
 
                 "#
