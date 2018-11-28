@@ -54,7 +54,7 @@ impl actix::Message for Connect {
 pub struct Disconnect(pub PublicKey);
 
 /// Basic MQ Message Data
-#[derive(Message, Debug, Deserialize, Serialize)]
+#[derive(Message, Debug, Deserialize, Serialize, Clone)]
 pub struct MqMessage {
     pub from: PublicKey,
     pub to: PublicKey,
@@ -64,6 +64,21 @@ pub struct MqMessage {
     pub time: SystemTime,
     pub nonce: Option<cipher::Nonce>,
     pub body: String,
+}
+
+impl MqMessage {
+    /// Convert message to Client message
+    fn to_message(&self) -> codec::MessageData {
+        codec::MessageData {
+            to: self.to,
+            signature: self.signature,
+            name: self.name.clone(),
+            protocol: self.protocol.clone(),
+            time: self.time,
+            nonce: self.nonce,
+            body: self.body.clone(),
+        }
+    }
 }
 
 /// Ping message for specific client

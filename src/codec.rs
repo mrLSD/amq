@@ -29,7 +29,7 @@ pub enum MqRequest {
 }
 
 /// Basic MQ message target/type
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(tag = "cmd", content = "data")]
 pub enum MessageProtocol {
     /// Publish / Subscribe protocol
@@ -48,6 +48,22 @@ pub struct MessageData {
     pub time: SystemTime,
     pub nonce: Option<cipher::Nonce>,
     pub body: String,
+}
+
+impl MessageData {
+    /// Convert message to Server message
+    fn to_message(&self, from: &PublicKey) -> server::MqMessage {
+        server::MqMessage {
+            from: *from,
+            to: self.to,
+            signature: self.signature,
+            name: self.name.clone(),
+            protocol: self.protocol.clone(),
+            time: self.time,
+            nonce: self.nonce,
+            body: self.body.clone(),
+        }
+    }
 }
 
 /// Server response

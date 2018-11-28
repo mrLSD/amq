@@ -260,9 +260,9 @@ impl Handler<ClientCommand> for MqClient {
 impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
     fn handle(&mut self, msg: codec::MqResponse, _: &mut Context<Self>) {
         match msg {
-            codec::MqResponse::Message(ref msg) => {
+            codec::MqResponse::Message(msg) => {
                 let mut msg_for_sign = msg.clone();
-                //msg_for_sign.
+                msg_for_sign.signature = None;
                 println!("message: {:#?}", msg);
             }
             codec::MqResponse::Pong => {}
