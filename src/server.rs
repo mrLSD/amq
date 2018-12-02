@@ -71,7 +71,7 @@ pub struct MqRegister {
 /// Response type for Register message
 /// It can be success or fail
 impl actix::Message for MqRegister {
-    type Result = bool;
+    type Result = Option<PublicKey>;
 }
 
 /// Handler for Connect message.
@@ -113,7 +113,7 @@ impl Handler<MqMessage> for MqServer {
 
 /// Handler for Register message.
 impl Handler<MqRegister> for MqServer {
-    type Result = bool;
+    type Result = MessageResult<MqRegister>;
 
     fn handle(&mut self, msg: MqRegister, ctx: &mut Context<Self>) -> Self::Result {
         println!("Handler<Register>");
@@ -121,7 +121,7 @@ impl Handler<MqRegister> for MqServer {
         // Check is Client already registered
         if let Some(addr) = self.sessions.get(&msg.pub_key) {
             eprintln!("Client already registered - close session");
-            return false;
+            return MessageResult(None);
         }
 
         if let Some(addr) = self.sessions.get(&msg.old_pub_key) {
@@ -129,8 +129,8 @@ impl Handler<MqRegister> for MqServer {
             self.sessions.remove(&msg.old_pub_key);
         } else {
             eprintln!("Session address not found");
-            return false;
+            return MessageResult(None);
         }
-        true
+        MessageResult(Some(msg.pub_key))
     }
 }

@@ -113,9 +113,9 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
                     .then(|res, act, ctx| {
                         match res {
                             // Registration successful
-                            Ok(true) => {
+                            Ok(Some(pub_key)) => {
                                 // Change old pub_key
-                                //self.pub_key = Some(pk);
+                                act.pub_key = Some(pub_key.clone());
                             }
                             // Registration failed
                             // stopping current session
