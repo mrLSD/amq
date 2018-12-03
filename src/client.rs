@@ -6,6 +6,7 @@ use crate::types::{ClientAppConfig, ClientConfig};
 use actix::prelude::*;
 use futures::stream::once;
 use futures::Future;
+use std::io::Read;
 use std::str::FromStr;
 use std::time::Duration;
 use std::{io, net, process, thread};
@@ -72,7 +73,7 @@ fn main() {
                         }
                     });
 
-                    // start console loop
+                    // Start console loop
                     let addr_to_send = addr.clone();
                     thread::spawn(move || loop {
                         let mut cmd = String::new();
@@ -80,6 +81,7 @@ fn main() {
                             println!("Error: {:?}", msg);
                             return;
                         }
+                        println!("Msg: {:?}", cmd);
 
                         addr_to_send.do_send(ClientCommand(cmd));
                     });
@@ -158,12 +160,31 @@ impl Handler<ClientCommand> for MqClient {
             let v: Vec<&str> = m.splitn(2, ' ').collect();
             match v[0] {
                 "/ping" => {
+                    match v[1] {
+                        "client1" => {}
+                        "client2" => {}
+                        _ => println!("Unknown client name. Print for help: /help"),
+                    }
                     self.framed.write(codec::MqRequest::Ping);
+                }
+                "/help" => {
+                    println!(
+                        r#"Commands HELP:
+    /ping [CLIENT]      ping connected clients
+                        client will ping by pub_key.
+                        Available clients name: client1, client2
+
+    /help               print this help
+    [CLIENT] [MESSAGE]  send message to specific client.
+                        Available clients name: client1, client2
+
+                "#
+                    );
                 }
                 _ => println!(">> unknown command"),
             }
         } else {
-            self.framed.write(codec::MqRequest::Message(m.to_owned()));
+            println!(">> Unknown command. For help print: /help");
         }
     }
 }
