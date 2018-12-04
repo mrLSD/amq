@@ -3,8 +3,10 @@ use actix::Message;
 use byteorder::{BigEndian, ByteOrder};
 use bytes::{BufMut, BytesMut};
 use serde_json as json;
-use sodiumoxide::crypto::sign::ed25519::PublicKey;
+use sodiumoxide::crypto::sign::ed25519::{PublicKey, Signature};
+use sodiumoxide::crypto::box_ as cipher;
 use std::io;
+use std::time::SystemTime;
 use tokio_io::codec::{Decoder, Encoder};
 
 use serde_derive::{Deserialize, Serialize};
@@ -23,6 +25,27 @@ pub enum MqRequest {
     Message(String),
     /// Register request
     Register(PublicKey),
+}
+
+/// Basic MQ message target/type
+#[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "cmd", content = "data")]
+pub enum MessageTarget {
+    /// Publish / Subscribe protocol
+    PubSub,
+    /// Request / Response protocol
+    ReqRep,
+}
+
+/// Basic MQ Message Data
+#[derive(Serialize, Deserialize, Debug)]
+pub struct MessageData {
+    pub to: PublicKey,
+    pub signature: Signature,
+    pub name: Option<String>,
+    pub target: MessageTarget,
+    pub time: SystemTime,
+    pub body: String,
 }
 
 /// Server response
