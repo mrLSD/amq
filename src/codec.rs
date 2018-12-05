@@ -2,6 +2,7 @@
 use actix::Message;
 use byteorder::{BigEndian, ByteOrder};
 use bytes::{BufMut, BytesMut};
+use serde_derive::{Deserialize, Serialize};
 use serde_json as json;
 use sodiumoxide::crypto::box_ as cipher;
 use sodiumoxide::crypto::sign::ed25519::{PublicKey, Signature};
@@ -9,7 +10,7 @@ use std::io;
 use std::time::SystemTime;
 use tokio_io::codec::{Decoder, Encoder};
 
-use serde_derive::{Deserialize, Serialize};
+use crate::server;
 
 /// Client request
 #[derive(Serialize, Deserialize, Debug, Message)]
@@ -56,7 +57,7 @@ pub enum MqResponse {
     /// Pong response
     Pong,
     /// Receive Message
-    Message(String),
+    Message(server::MqMessage),
     /// Ping message for Client
     PingClient(PublicKey),
     /// Pong message for Client

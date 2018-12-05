@@ -1,4 +1,6 @@
 mod codec;
+mod server;
+mod session;
 mod sign;
 mod types;
 
@@ -177,7 +179,7 @@ impl Handler<ClientCommand> for MqClient {
                     }
                     match v[1] {
                         "client1" => {
-                            let msg = codec::MessageData {
+                            let mut msg = codec::MessageData {
                                 to: client1_pk,
                                 signature: None,
                                 name: None,
@@ -186,6 +188,10 @@ impl Handler<ClientCommand> for MqClient {
                                 nonce: None,
                                 body: "message for client1".to_owned(),
                             };
+                            let data = serde_json::to_string(&msg)
+                                .expect("Message should be serialize to JSON");
+                            msg.signature =
+                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key));
                             self.framed.write(codec::MqRequest::Message(msg));
                         }
                         "client2" => {
@@ -255,7 +261,9 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
     fn handle(&mut self, msg: codec::MqResponse, _: &mut Context<Self>) {
         match msg {
             codec::MqResponse::Message(ref msg) => {
-                println!("message: {}", msg);
+                let mut msg_for_sign = msg.clone();
+                //msg_for_sign.
+                println!("message: {:#?}", msg);
             }
             codec::MqResponse::Pong => {}
             codec::MqResponse::PingClient(pk) => {

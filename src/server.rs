@@ -1,6 +1,7 @@
 use crate::types::NodeAppConfig;
 use actix::prelude::*;
 use actix::Message;
+use serde_derive::{Deserialize, Serialize};
 use sodiumoxide::crypto::box_ as cipher;
 use sodiumoxide::crypto::sign::ed25519::{PublicKey, Signature};
 use std::collections::HashMap;
@@ -53,7 +54,7 @@ impl actix::Message for Connect {
 pub struct Disconnect(pub PublicKey);
 
 /// Basic MQ Message Data
-#[derive(Message, Debug)]
+#[derive(Message, Debug, Deserialize, Serialize)]
 pub struct MqMessage {
     pub from: PublicKey,
     pub to: PublicKey,
@@ -129,8 +130,7 @@ impl Handler<MqMessage> for MqServer {
     fn handle(&mut self, msg: MqMessage, _: &mut Context<Self>) {
         println!("Handler<Message>");
         if let Some(addr) = self.sessions.get(&msg.to) {
-            let message: String = format!("Response message for: {:#?}", msg);
-            addr.do_send(session::MqSessionMessage(message))
+            addr.do_send(session::MqSessionMessage(msg))
         }
     }
 }

@@ -16,7 +16,7 @@ const PING_WAIT_SEC: u64 = 15;
 
 /// MQ server sends this messages to session
 #[derive(Message)]
-pub struct MqSessionMessage(pub String);
+pub struct MqSessionMessage(pub server::MqMessage);
 
 /// MQ server sends this Disconnect for
 /// current session
