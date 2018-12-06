@@ -294,6 +294,11 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
                 let is_verified = msg.verify();
                 println!("message: {:#?}", msg);
                 println!("is verified: {:#?}", is_verified);
+                addr.do_send(MqMessageResponse {
+                    from: msg_data.from,
+                    to: msg_data.to,
+                    status,
+                });
             }
             codec::MqResponse::Pong => {}
             codec::MqResponse::PingClient(pk) => {
@@ -302,6 +307,9 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
             }
             codec::MqResponse::PongClient(pk) => {
                 println!("PongClient response: {:}", sign::to_hex_pk(&pk));
+            }
+            codec::MqResponse::MessageResponseStatus(status) => {
+                println!("MessageResponseStatus: {:#?}", status);
             }
         }
     }

@@ -131,9 +131,10 @@ pub struct MqRegister {
 /// Message send statuses
 #[derive(Debug, Serialize, Deserialize)]
 pub enum MessageSendStatus {
-    SENT,
-    RECEIVED,
-    FAILED,
+    Sent,
+    Received,
+    PeerNotFound,
+    Failed,
 }
 
 /// Response type for Register message
@@ -175,8 +176,24 @@ impl Handler<MqMessage> for MqServer {
 
     fn handle(&mut self, msg: MqMessage, _: &mut Context<Self>) {
         println!("Handler<Message>");
-        if let Some(addr) = self.sessions.get(&msg.to) {
-            addr.do_send(session::MqSessionMessage(msg))
+        let msg_data = msg.clone();
+        // Send message and set message status response
+        let status = if let Some(addr) = self.sessions.get(&msg.to) {
+            addr.do_send(session::MqSessionMessage(msg));
+            MessageSendStatus::Sent
+        } else if self.sessions.get(&msg.from).is_some() {
+            MessageSendStatus::PeerNotFound
+        } else {
+            MessageSendStatus::Failed
+        };
+
+        // Send message response to peer
+        if let Some(addr) = self.sessions.get(&msg_data.from) {
+            addr.do_send(MqMessageResponse {
+                from: msg_data.from,
+                to: msg_data.to,
+                status,
+            });
         }
     }
 }
@@ -240,7 +257,7 @@ impl Handler<MqMessageResponse> for MqServer {
 
         // Send response message to `from` peer
         if let Some(addr) = self.sessions.get(&msg.from) {
-            addr.do_send(session::MqSessionPongClient(msg.from));
+            addr.do_send(msg);
         }
     }
 }
