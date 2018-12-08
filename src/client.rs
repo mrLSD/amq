@@ -294,11 +294,15 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
                 let is_verified = msg.verify();
                 println!("message: {:#?}", msg);
                 println!("is verified: {:#?}", is_verified);
-                addr.do_send(MqMessageResponse {
-                    from: msg_data.from,
-                    to: msg_data.to,
-                    status,
-                });
+
+                // Send message response data
+                self.framed.write(codec::MqRequest::MessageResponse(
+                    server::MqMessageResponse {
+                        from: msg.from,
+                        to: msg.to,
+                        status: server::MessageSendStatus::Received,
+                    },
+                ));
             }
             codec::MqResponse::Pong => {}
             codec::MqResponse::PingClient(pk) => {

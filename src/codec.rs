@@ -26,6 +26,8 @@ pub enum MqRequest {
     Message(MessageData),
     /// Register request
     Register(PublicKey),
+    /// Message Response request
+    MessageResponse(server::MqMessageResponse),
 }
 
 /// Basic MQ message target/type

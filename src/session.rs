@@ -146,6 +146,13 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
                     })
                     .wait(ctx);
             }
+            MqRequest::MessageResponse(response) => {
+                self.addr.do_send(server::MqMessageResponse {
+                    from: response.from,
+                    to: response.to,
+                    status: response.status,
+                });
+            }
         }
     }
 }
