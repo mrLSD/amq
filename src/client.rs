@@ -277,6 +277,101 @@ impl Handler<ClientCommand> for MqClient {
                         _ => println!(">> Wrong /reqrep command. For help print: /help"),
                     }
                 }
+                "/pubsub" => {
+                    if v.len() < 2 {
+                        println!(">> Wrong /pubsub command. For help print: /help");
+                        return;
+                    }
+                    match v[1] {
+                        "client1" => {
+                            let msg_data = json::to_string(&ClientMessageData {
+                                title: "message for client1".to_owned(),
+                                amount: 100,
+                            })
+                            .expect("Message should be serialize to JSON");
+
+                            let mut msg = codec::MessageData {
+                                id: Uuid::new_v4().to_string(),
+                                to: client1_pk,
+                                signature: None,
+                                name: None,
+                                protocol: codec::MessageProtocol::PubSub,
+                                time: SystemTime::now(),
+                                nonce: None,
+                                body: msg_data,
+                            };
+
+                            if self.settings.message.encode {
+                                let nonce = box_::gen_nonce();
+                                let encoded_msg = box_::seal(
+                                    &msg.body.as_bytes(),
+                                    &nonce,
+                                    &self.settings.message.public_key,
+                                    &self.settings.message.secret_key,
+                                );
+
+                                msg.body = sign::to_hex(&encoded_msg);
+                                msg.nonce = Some(nonce);
+                            }
+
+                            let data =
+                                json::to_string(&msg).expect("Message should be serialize to JSON");
+
+                            // Set message sign
+                            msg.signature = if self.settings.message.sign {
+                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key))
+                            } else {
+                                None
+                            };
+
+                            self.framed.write(codec::MqRequest::Message(msg));
+                        }
+                        "client2" => {
+                            let msg_data = json::to_string(&ClientMessageData {
+                                title: "message for client2".to_owned(),
+                                amount: 200,
+                            })
+                            .expect("Message should be serialize to JSON");
+
+                            let mut msg = codec::MessageData {
+                                id: Uuid::new_v4().to_string(),
+                                to: client2_pk,
+                                signature: None,
+                                name: None,
+                                protocol: codec::MessageProtocol::PubSub,
+                                time: SystemTime::now(),
+                                nonce: None,
+                                body: msg_data,
+                            };
+
+                            if self.settings.message.encode {
+                                let nonce = box_::gen_nonce();
+                                let encoded_msg = box_::seal(
+                                    &msg.body.as_bytes(),
+                                    &nonce,
+                                    &self.settings.message.public_key,
+                                    &self.settings.message.secret_key,
+                                );
+
+                                msg.body = sign::to_hex(&encoded_msg);
+                                msg.nonce = Some(nonce);
+                            }
+
+                            let data =
+                                json::to_string(&msg).expect("Message should be serialize to JSON");
+
+                            // Set message sign
+                            msg.signature = if self.settings.message.sign {
+                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key))
+                            } else {
+                                None
+                            };
+
+                            self.framed.write(codec::MqRequest::Message(msg));
+                        }
+                        _ => println!(">> Wrong /pubsub command. For help print: /help"),
+                    }
+                }
                 "/ping" => {
                     if v.len() < 2 {
                         println!(">> Wrong /ping command. For help print: /help");
@@ -309,10 +404,13 @@ impl Handler<ClientCommand> for MqClient {
     /reqrep             send REQ/REP message to specific client.
                         Available clients name: client1, client2
 
+    /pubsub             send PUB/SUB message to specific client.
+                        Available clients name: client1, client2
+
                 "#
                     );
                 }
-                _ => println!(">> unknown command"),
+                _ => println!(">> unknown command. For help print: /help"),
             }
         } else {
             println!(">> Unknown command. For help print: /help");
