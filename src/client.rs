@@ -6,6 +6,7 @@ mod types;
 
 use crate::types::{ClientAppConfig, ClientConfig};
 
+use crate::codec::MessageProtocol::ReqRep;
 use actix::prelude::*;
 use futures::{stream::once, Future};
 use serde_derive::{Deserialize, Serialize};
@@ -338,20 +339,22 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
                     )
                     .expect("Message should be decoded.");
 
-                    println!(
-                        "Encoded message: {:?}",
-                        std::str::from_utf8(&encoded_msg[..])
-                    );
+                    let msg_data = std::str::from_utf8(&encoded_msg[..])
+                        .expect("Message should be valid UTF8 string");
+                    let client_msg: ClientMessageData = json::from_str(&msg_data).unwrap();
+                    dbg!(client_msg);
                 }
 
-                // Send message response data
-                self.framed.write(codec::MqRequest::MessageResponse(
-                    server::MqMessageResponse {
-                        from: msg.from,
-                        to: msg.to,
-                        status: server::MessageSendStatus::Received,
-                    },
-                ));
+                // Send message response data for ReqRep
+                if msg.protocol == ReqRep {
+                    self.framed.write(codec::MqRequest::MessageResponse(
+                        server::MqMessageResponse {
+                            from: msg.from,
+                            to: msg.to,
+                            status: server::MessageSendStatus::Received,
+                        },
+                    ));
+                }
             }
             codec::MqResponse::Pong => {}
             codec::MqResponse::PingClient(pk) => {

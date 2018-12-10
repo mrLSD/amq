@@ -31,7 +31,7 @@ pub enum MqRequest {
 }
 
 /// Basic MQ message target/type
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "cmd", content = "data")]
 pub enum MessageProtocol {
     /// Publish / Subscribe protocol
