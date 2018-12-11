@@ -2,6 +2,7 @@ use crate::types::NodeAppConfig;
 use actix::prelude::*;
 use actix::Message;
 use serde_derive::{Deserialize, Serialize};
+use serde_json as json;
 use sodiumoxide::crypto::box_ as cipher;
 use sodiumoxide::crypto::sign::ed25519::{PublicKey, Signature};
 use std::collections::HashMap;
@@ -68,7 +69,7 @@ pub struct MqMessage {
 
 impl MqMessage {
     /// Convert message to Client message
-    fn to_message(&self) -> codec::MessageData {
+    pub fn to_message(&self) -> codec::MessageData {
         codec::MessageData {
             to: self.to,
             signature: self.signature,
@@ -78,6 +79,17 @@ impl MqMessage {
             nonce: self.nonce,
             body: self.body.clone(),
         }
+    }
+
+    /// Verify message signature
+    pub fn verify(&mut self) -> bool {
+        if self.signature.is_none() {
+            return false;
+        }
+        let mut msg = self.to_message();
+        msg.signature = None;
+        let data = json::to_string(&msg).expect("Message should be serialize to JSON");
+        sign::verify(&self.signature.unwrap(), data.as_bytes(), &self.from)
     }
 }
 

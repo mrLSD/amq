@@ -11,6 +11,7 @@ use std::time::SystemTime;
 use tokio_io::codec::{Decoder, Encoder};
 
 use crate::server;
+use crate::sign;
 
 /// Client request
 #[derive(Serialize, Deserialize, Debug, Message)]
@@ -39,7 +40,7 @@ pub enum MessageProtocol {
 }
 
 /// Basic MQ Message Data
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MessageData {
     pub to: PublicKey,
     pub signature: Option<Signature>,
@@ -52,7 +53,7 @@ pub struct MessageData {
 
 impl MessageData {
     /// Convert message to Server message
-    fn to_message(&self, from: &PublicKey) -> server::MqMessage {
+    pub fn to_message(&self, from: &PublicKey) -> server::MqMessage {
         server::MqMessage {
             from: *from,
             to: self.to,

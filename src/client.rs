@@ -9,7 +9,7 @@ use crate::types::{ClientAppConfig, ClientConfig};
 use actix::prelude::*;
 use futures::stream::once;
 use futures::Future;
-use serde_json;
+use serde_json as json;
 use sodiumoxide::crypto::sign::ed25519::PublicKey;
 use std::str::FromStr;
 use std::time::Duration;
@@ -188,8 +188,8 @@ impl Handler<ClientCommand> for MqClient {
                                 nonce: None,
                                 body: "message for client1".to_owned(),
                             };
-                            let data = serde_json::to_string(&msg)
-                                .expect("Message should be serialize to JSON");
+                            let data =
+                                json::to_string(&msg).expect("Message should be serialize to JSON");
                             msg.signature =
                                 Some(sign::sign(data.as_bytes(), &self.settings.secret_key));
                             self.framed.write(codec::MqRequest::Message(msg));
@@ -260,10 +260,10 @@ impl Handler<ClientCommand> for MqClient {
 impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
     fn handle(&mut self, msg: codec::MqResponse, _: &mut Context<Self>) {
         match msg {
-            codec::MqResponse::Message(msg) => {
-                let mut msg_for_sign = msg.clone();
-                msg_for_sign.signature = None;
+            codec::MqResponse::Message(mut msg) => {
+                let is_verified = msg.verify();
                 println!("message: {:#?}", msg);
+                println!("is verified: {:#?}", is_verified);
             }
             codec::MqResponse::Pong => {}
             codec::MqResponse::PingClient(pk) => {
