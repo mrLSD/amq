@@ -232,3 +232,13 @@ impl MqSession {
         });
     }
 }
+
+/// Response handler to peer
+impl Handler<server::MqMessageResponse> for MqSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: server::MqMessageResponse, _: &mut Context<Self>) {
+        // Send response message to peer
+        self.framed.write(MqResponse::MessageResponseStatus(msg));
+    }
+}

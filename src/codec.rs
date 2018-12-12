@@ -78,6 +78,8 @@ pub enum MqResponse {
     PingClient(PublicKey),
     /// Pong message for Client
     PongClient(PublicKey),
+    /// Message response status
+    MessageResponseStatus(server::MqMessageResponse),
 }
 
 /// Codec for Client -> Server transport

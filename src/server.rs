@@ -96,6 +96,14 @@ impl MqMessage {
     }
 }
 
+/// Sent Message response data
+#[derive(Message, Debug, Serialize, Deserialize)]
+pub struct MqMessageResponse {
+    pub from: PublicKey,
+    pub to: PublicKey,
+    pub status: MessageSendStatus,
+}
+
 /// Ping message for specific client
 #[derive(Message)]
 pub struct MqPingClient {
@@ -118,6 +126,14 @@ pub struct MqRegister {
     pub old_pub_key: PublicKey,
     /// Client identifier
     pub pub_key: PublicKey,
+}
+
+/// Message send statuses
+#[derive(Debug, Serialize, Deserialize)]
+pub enum MessageSendStatus {
+    SENT,
+    RECEIVED,
+    FAILED,
 }
 
 /// Response type for Register message
@@ -210,6 +226,20 @@ impl Handler<MqPongClient> for MqServer {
         println!("Handler<MqPongClient>");
 
         if let Some(addr) = self.sessions.get(&msg.to) {
+            addr.do_send(session::MqSessionPongClient(msg.from));
+        }
+    }
+}
+
+/// Handler for Response message.
+impl Handler<MqMessageResponse> for MqServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: MqMessageResponse, _: &mut Context<Self>) {
+        println!("Handler<MqMessageResponse>");
+
+        // Send response message to `from` peer
+        if let Some(addr) = self.sessions.get(&msg.from) {
             addr.do_send(session::MqSessionPongClient(msg.from));
         }
     }

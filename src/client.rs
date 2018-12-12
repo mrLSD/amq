@@ -164,11 +164,11 @@ impl Handler<ClientCommand> for MqClient {
         if m.starts_with('/') {
             let v: Vec<&str> = m.splitn(2, ' ').collect();
             let client1_pk = sign::from_string_pk(
-                &"b521a35da1439d86c8c5c9eb54e5bbef6500f53afb477a89c46d7e54dc77efaf".to_string(),
+                &"f20bfbae14396d9d3da5b35f8d9c2800244f59ddb7492af045930b760c893185".to_string(),
             );
 
             let client2_pk = sign::from_string_pk(
-                &"7b2e20f9c6bac2033185fe5c9952d8053ccef6af30104060f3475c9be9d40e78".to_string(),
+                &"5238e1c69a42280dc5d2d93ca18889a7ecbc6388872d4e64ac328eed7940b5b7".to_string(),
             );
 
             match v[0] {
