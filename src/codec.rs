@@ -34,8 +34,10 @@ pub enum MqRequest {
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 #[serde(tag = "cmd", content = "data")]
 pub enum MessageProtocol {
-    /// Publish / Subscribe protocol
-    PubSub,
+    /// Publish for PUB/SUB protocol
+    Pub,
+    /// Subscribe for PUB/SUB protocol
+    Sub,
     /// Request / Response protocol
     ReqRep,
 }

@@ -277,7 +277,7 @@ impl Handler<ClientCommand> for MqClient {
                         _ => println!(">> Wrong /reqrep command. For help print: /help"),
                     }
                 }
-                "/pubsub" => {
+                "/pub" => {
                     if v.len() < 2 {
                         println!(">> Wrong /pubsub command. For help print: /help");
                         return;
@@ -295,7 +295,7 @@ impl Handler<ClientCommand> for MqClient {
                                 to: client1_pk,
                                 signature: None,
                                 name: None,
-                                protocol: codec::MessageProtocol::PubSub,
+                                protocol: codec::MessageProtocol::Pub,
                                 time: SystemTime::now(),
                                 nonce: None,
                                 body: msg_data,
@@ -338,7 +338,7 @@ impl Handler<ClientCommand> for MqClient {
                                 to: client2_pk,
                                 signature: None,
                                 name: None,
-                                protocol: codec::MessageProtocol::PubSub,
+                                protocol: codec::MessageProtocol::Pub,
                                 time: SystemTime::now(),
                                 nonce: None,
                                 body: msg_data,
@@ -401,11 +401,14 @@ impl Handler<ClientCommand> for MqClient {
     [CLIENT] [MESSAGE]  send message to specific client.
                         Available clients name: client1, client2
 
-    /reqrep             send REQ/REP message to specific client.
+    /reqrep [CLIENT]    send REQ/REP message to specific client.
                         Available clients name: client1, client2
 
-    /pubsub             send PUB/SUB message to specific client.
-                        Available clients name: client1, client2
+    /pub [NAME]         send PUB message for specific channel name.
+                        Example: /pub my.public.channel
+
+    /sub [NAME]         send SUB message to subscrive to specific channel name.
+                        Example: /sub my.public.channel
 
                 "#
                     );
