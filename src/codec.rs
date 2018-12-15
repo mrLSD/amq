@@ -46,7 +46,7 @@ pub enum MessageProtocol {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct MessageData {
     pub id: String,
-    pub to: PublicKey,
+    pub to: Option<PublicKey>,
     pub signature: Option<Signature>,
     pub name: Option<String>,
     pub protocol: MessageProtocol,

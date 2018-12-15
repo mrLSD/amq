@@ -9,6 +9,7 @@ use std::collections::HashMap;
 use std::time::SystemTime;
 
 use crate::codec;
+use crate::codec::MessageProtocol::{Pub, Sub};
 use crate::session;
 use crate::sign;
 
@@ -61,7 +62,7 @@ pub struct Disconnect(pub PublicKey);
 pub struct MqMessage {
     pub id: String,
     pub from: PublicKey,
-    pub to: PublicKey,
+    pub to: Option<PublicKey>,
     pub signature: Option<Signature>,
     pub name: Option<String>,
     pub protocol: codec::MessageProtocol,
@@ -102,7 +103,7 @@ impl MqMessage {
 #[derive(Message, Debug, Serialize, Deserialize)]
 pub struct MqMessageResponse {
     pub from: PublicKey,
-    pub to: PublicKey,
+    pub to: Option<PublicKey>,
     pub status: MessageSendStatus,
 }
 
@@ -180,7 +181,9 @@ impl Handler<MqMessage> for MqServer {
         println!("Handler<Message>");
         let msg_data = msg.clone();
         // Send message and set message status response
-        let status = if let Some(addr) = self.sessions.get(&msg.to) {
+        let status = if msg.protocol == Pub || msg.protocol == Sub {
+            MessageSendStatus::Sent
+        } else if let Some(addr) = self.sessions.get(&msg.to.unwrap()) {
             addr.do_send(session::MqSessionMessage(msg));
             MessageSendStatus::Sent
         } else if self.sessions.get(&msg.from).is_some() {
