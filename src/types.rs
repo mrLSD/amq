@@ -85,8 +85,8 @@ impl ClientAppConfig {
                 port: cfg.node.port,
             },
             message: ClientMessageConfig {
-                sign: true,
-                encode: false,
+                sign: cfg.message.sign,
+                encode: cfg.message.encode,
             },
         }
     }
