@@ -41,6 +41,11 @@ pub fn to_hex_pk(pk: &PublicKey) -> String {
     hex::encode(&pk[..])
 }
 
+/// Convert data to hex string
+pub fn to_hex(data: &[u8]) -> String {
+    hex::encode(&data[..])
+}
+
 /// Return PublicKey from hex string
 pub fn from_string_pk(hex: &String) -> PublicKey {
     let pk = hex::decode(hex).unwrap();

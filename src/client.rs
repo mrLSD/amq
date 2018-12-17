@@ -7,10 +7,10 @@ mod types;
 use crate::types::{ClientAppConfig, ClientConfig};
 
 use actix::prelude::*;
-use futures::stream::once;
-use futures::Future;
+use futures::{stream::once, Future};
 use serde_json as json;
 use sodiumoxide::crypto::sign::ed25519::PublicKey;
+use sodiumoxide::crypto::box_;
 use std::str::FromStr;
 use std::time::Duration;
 use std::time::SystemTime;
@@ -190,8 +190,23 @@ impl Handler<ClientCommand> for MqClient {
                             };
                             let data =
                                 json::to_string(&msg).expect("Message should be serialize to JSON");
-                            msg.signature =
-                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key));
+                            // Set message sign
+                            msg.signature = if self.settings.message.sign {
+                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key))
+                            } else {
+                                None
+                            };
+
+                            println!("Signed: {:#?}", self.settings);
+
+                            if self.settings.message.encode {
+                                let (pk, sk) = box_::gen_keypair();
+                                let nonce = box_::gen_nonce();
+                                let encoded_msg = box_::seal(&msg.body.as_bytes(), &nonce, &pk, &sk);
+                                let hex_msg = sign::to_hex(&encoded_msg);
+                                println!("Encoded msg: {:?}", hex_msg);
+                            }
+
                             self.framed.write(codec::MqRequest::Message(msg));
                         }
                         "client2" => {
@@ -206,8 +221,13 @@ impl Handler<ClientCommand> for MqClient {
                             };
                             let data = serde_json::to_string(&msg)
                                 .expect("Message should be serialize to JSON");
-                            msg.signature =
-                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key));
+                            // Set message sign
+                            msg.signature = if self.settings.message.sign {
+                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key))
+                            } else {
+                                None
+                            };
+
                             self.framed.write(codec::MqRequest::Message(msg));
                         }
                         _ => println!(">> Wrong /reqrep command. For help print: /help"),
