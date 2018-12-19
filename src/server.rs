@@ -64,7 +64,7 @@ pub struct MqMessage {
     pub from: PublicKey,
     pub to: Option<PublicKey>,
     pub signature: Option<Signature>,
-    pub name: Option<String>,
+    pub event: Option<String>,
     pub protocol: codec::MessageProtocol,
     pub time: SystemTime,
     pub nonce: Option<cipher::Nonce>,
@@ -79,7 +79,7 @@ impl MqMessage {
             id: self.id.clone(),
             to: self.to,
             signature: self.signature,
-            name: self.name.clone(),
+            event: self.event.clone(),
             protocol: self.protocol.clone(),
             time: self.time,
             nonce: self.nonce,
@@ -98,6 +98,9 @@ impl MqMessage {
         sign::verify(&self.signature.unwrap(), data.as_bytes(), &self.from)
     }
 }
+
+/// Public Message Events subscribers
+pub type MessageEventsSubscribers = HashMap<String, Vec<PublicKey>>;
 
 /// Sent Message response data
 #[derive(Message, Debug, Serialize, Deserialize)]
