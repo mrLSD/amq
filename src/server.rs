@@ -19,6 +19,7 @@ use crate::sign;
 #[allow(dead_code)]
 pub struct MqServer {
     sessions: HashMap<PublicKey, Addr<session::MqSession>>,
+    events: MessageEvents,
     settigns: NodeAppConfig,
 }
 
@@ -27,6 +28,9 @@ impl MqServer {
     pub fn new(cfg: NodeAppConfig) -> MqServer {
         MqServer {
             sessions: HashMap::new(),
+            events: MessageEvents {
+                subscribers: HashMap::new(),
+            },
             settigns: cfg,
         }
     }
@@ -101,6 +105,12 @@ impl MqMessage {
 
 /// Public Message Events subscribers
 pub type MessageEventsSubscribers = HashMap<String, Vec<PublicKey>>;
+
+/// Message Events data
+pub struct MessageEvents {
+    /// PUBSUB subscribers
+    pub subscribers: MessageEventsSubscribers,
+}
 
 /// Sent Message response data
 #[derive(Message, Debug, Serialize, Deserialize)]
@@ -185,6 +195,20 @@ impl Handler<MqMessage> for MqServer {
         let msg_data = msg.clone();
         // Send message and set message status response
         let status = if msg.protocol == Pub || msg.protocol == Sub {
+            match msg.protocol {
+                Pub => {}
+                Sub => {
+                    let event_name = msg.event.unwrap();
+                    // Add subscriber to specific Event
+                    if let Some(event) = self.events.subscribers.get_mut(&event_name) {
+                        dbg!(event);
+                        //*event.insert(&msg.from);
+                    } else {
+                        self.events.subscribers.insert(event_name, vec![msg.from]);
+                    }
+                }
+                _ => {}
+            }
             MessageSendStatus::Sent
         } else if let Some(addr) = self.sessions.get(&msg.to.unwrap()) {
             addr.do_send(session::MqSessionMessage(msg));
