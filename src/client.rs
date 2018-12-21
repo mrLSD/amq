@@ -328,6 +328,8 @@ impl Handler<ClientCommand> for MqClient {
                         println!(">> Wrong /sub command. For help print: /help");
                         return;
                     }
+                    let event_name = Some(v[1].to_owned());
+
                     let msg_data = json::to_string(&ClientMessageData {
                         title: "message for client1".to_owned(),
                         amount: 100,
@@ -338,7 +340,7 @@ impl Handler<ClientCommand> for MqClient {
                         id: Uuid::new_v4().to_string(),
                         to: None,
                         signature: None,
-                        event: None,
+                        event: event_name,
                         protocol: codec::MessageProtocol::Sub,
                         time: SystemTime::now(),
                         nonce: None,

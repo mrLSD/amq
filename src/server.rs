@@ -107,6 +107,7 @@ impl MqMessage {
 pub type MessageEventsSubscribers = HashMap<String, Vec<PublicKey>>;
 
 /// Message Events data
+#[derive(Debug, Clone)]
 pub struct MessageEvents {
     /// PUBSUB subscribers
     pub subscribers: MessageEventsSubscribers,
@@ -194,15 +195,14 @@ impl Handler<MqMessage> for MqServer {
         println!("Handler<Message>");
         let msg_data = msg.clone();
         // Send message and set message status response
-        let status = if msg.protocol == Pub || msg.protocol == Sub {
+        let status = if (msg.protocol == Pub || msg.protocol == Sub) && msg.event.is_some() {
             match msg.protocol {
                 Pub => {}
                 Sub => {
                     let event_name = msg.event.unwrap();
                     // Add subscriber to specific Event
                     if let Some(event) = self.events.subscribers.get_mut(&event_name) {
-                        dbg!(event);
-                        //*event.insert(&msg.from);
+                        event.push(msg.from);
                     } else {
                         self.events.subscribers.insert(event_name, vec![msg.from]);
                     }
