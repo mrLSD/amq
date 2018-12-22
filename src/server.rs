@@ -197,7 +197,17 @@ impl Handler<MqMessage> for MqServer {
         // Send message and set message status response
         let status = if (msg.protocol == Pub || msg.protocol == Sub) && msg.event.is_some() {
             match msg.protocol {
-                Pub => {}
+                Pub => {
+                    let event_name = msg.event.clone().unwrap();
+                    // Send message to subscribers
+                    if let Some(event) = self.events.subscribers.get(&event_name) {
+                        for subscriber in event {
+                            if let Some(addr) = self.sessions.get(subscriber) {
+                                addr.do_send(session::MqSessionMessage(msg.clone()));
+                            }
+                        }
+                    }
+                }
                 Sub => {
                     let event_name = msg.event.unwrap();
                     // Add subscriber to specific Event
@@ -210,10 +220,15 @@ impl Handler<MqMessage> for MqServer {
                 _ => {}
             }
             MessageSendStatus::Sent
+        } else if msg.to.is_none() {
+            // Check is set peer `to`
+            MessageSendStatus::PeerNotFound
         } else if let Some(addr) = self.sessions.get(&msg.to.unwrap()) {
+            // Send message to peer `to`
             addr.do_send(session::MqSessionMessage(msg));
             MessageSendStatus::Sent
         } else if self.sessions.get(&msg.from).is_some() {
+            // We found `from` peer but not found peer `to`
             MessageSendStatus::PeerNotFound
         } else {
             MessageSendStatus::Failed
