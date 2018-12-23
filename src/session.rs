@@ -78,7 +78,7 @@ impl WriteHandler<io::Error> for MqSession {}
 /// To use `Framed` with an actor, we have to implement `StreamHandler` trait
 impl StreamHandler<MqRequest, io::Error> for MqSession {
     /// This is main event loop for client requests
-    fn handle(&mut self, msg: MqRequest, _: &mut Self::Context) {
+    fn handle(&mut self, msg: MqRequest, ctx: &mut Self::Context) {
         match msg {
             MqRequest::Message(message) => {
                 if self.pub_key.is_none() {
@@ -101,15 +101,29 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
                 }
 
                 let old_pub_key = self.pub_key.unwrap();
-                // Change old pub_key
-                self.pub_key = Some(pk);
 
                 println!("Register pub_key: {}", sign::to_hex_pk(&pk));
 
-                self.addr.do_send(server::MqRegister {
-                    old_pub_key: old_pub_key,
-                    pub_key: pk,
-                });
+                self.addr
+                    .send(server::MqRegister {
+                        old_pub_key: old_pub_key,
+                        pub_key: pk,
+                    })
+                    .into_actor(self)
+                    .then(|res, act, ctx| {
+                        match res {
+                            // Registration successful
+                            Ok(true) => {
+                                // Change old pub_key
+                                //self.pub_key = Some(pk);
+                            }
+                            // Registration failed
+                            // stopping current session
+                            _ => ctx.stop(),
+                        }
+                        actix::fut::ok(())
+                    })
+                    .wait(ctx);
             }
         }
     }
