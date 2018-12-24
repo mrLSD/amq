@@ -23,7 +23,7 @@ fn generate_config_date(config_type: AppConfigType) -> String {
                 secret_key: sign::to_hex_sk(&sk),
                 node: ClientNodeConfig {
                     public_key: sign::to_hex_pk(&pk),
-                    ip: "127,0,0,1".to_string(),
+                    ip: "0.0.0.0".to_string(),
                     port: 3030,
                 },
             };

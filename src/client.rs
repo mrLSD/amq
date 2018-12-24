@@ -137,8 +137,8 @@ impl actix::io::WriteHandler<io::Error> for MqClient {}
 impl Handler<RegisterCommand> for MqClient {
     type Result = ();
 
-    fn handle(&mut self, _: RegisterCommand, _: &mut Context<Self>) {
-        let (pk, _) = sign::gen_keypair();
+    fn handle(&mut self, msg: RegisterCommand, _: &mut Context<Self>) {
+        let pk = msg.0;
         println!("Handler<RegisterCommand>: {}", sign::to_hex_pk(&pk));
         self.framed.write(codec::MqRequest::Register(pk));
     }
