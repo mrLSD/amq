@@ -54,7 +54,11 @@ fn main() {
 
     actix::System::run(move || {
         // Connect to server
-        let addr = net::SocketAddr::from_str(&format!("{:?}:{:?}", client_config.node.ip, client_config.node.port)).unwrap();
+        let addr = net::SocketAddr::from_str(&format!(
+            "{}:{:?}",
+            client_config.node.ip, client_config.node.port
+        ))
+        .unwrap();
 
         Arbiter::spawn(
             TcpStream::connect(&addr)
