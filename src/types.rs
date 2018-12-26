@@ -26,10 +26,27 @@ pub struct ClientNodeConfig {
     pub port: u32,
 }
 
+/// Node app config struct
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct NodeAppConfig {
     pub public_key: PublicKey,
     pub secret_key: SecretKey,
+    pub port: u32,
+}
+
+/// Client app config struct
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ClientAppConfig {
+    pub public_key: PublicKey,
+    pub secret_key: SecretKey,
+    pub node: ClientAppNodeConfig,
+}
+
+/// Client app config - node for connection
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ClientAppNodeConfig {
+    pub public_key: PublicKey,
+    pub ip: String,
     pub port: u32,
 }
 
@@ -40,6 +57,21 @@ impl NodeAppConfig {
             public_key: sign::from_string_pk(&cfg.public_key),
             secret_key: sign::from_string_sk(&cfg.secret_key),
             port: cfg.port,
+        }
+    }
+}
+
+/// Init Client app configuration
+impl ClientAppConfig {
+    pub fn new(cfg: &ClientConfig) -> Self {
+        ClientAppConfig {
+            public_key: sign::from_string_pk(&cfg.public_key),
+            secret_key: sign::from_string_sk(&cfg.secret_key),
+            node: ClientAppNodeConfig {
+                public_key: sign::from_string_pk(&cfg.node.public_key),
+                ip: cfg.node.ip.clone(),
+                port: cfg.node.port,
+            },
         }
     }
 }

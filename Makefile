@@ -16,7 +16,7 @@ check:
 
 client:
 	@echo "Run Client"
-	@cargo run --bin client
+	@cargo run --bin client client.toml
 
 config:
 	@echo "Run configurator"

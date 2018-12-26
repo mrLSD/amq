@@ -1,9 +1,8 @@
 mod codec;
 mod sign;
+mod types;
 
-use std::fs;
-use toml;
-
+use crate::types::{ClientAppConfig, ClientConfig};
 use actix::prelude::*;
 use futures::stream::once;
 use futures::Future;
@@ -14,6 +13,7 @@ use tokio_codec::FramedRead;
 use tokio_io::io::WriteHalf;
 use tokio_io::AsyncRead;
 use tokio_tcp::TcpStream;
+use toml;
 
 use sodiumoxide::crypto::sign::ed25519::PublicKey;
 
@@ -39,22 +39,30 @@ Usage: client [CONFIG_FILE]
     std::process::exit(code);
 }
 
+/// Read config data form TOML file
+fn read_config() -> ClientConfig {
+    let mut args = std::env::args();
+    let config_file = args.nth(1).unwrap();
+
+    let config_data = std::fs::read_to_string(config_file).expect("File not found");
+    toml::from_str(&config_data).expect("Failed to parse config file")
+}
+
 fn main() {
     check_commands();
+    let client_config = ClientAppConfig::new(&read_config());
 
-    actix::System::run(|| {
+    actix::System::run(move || {
         // Connect to server
-        let addr = net::SocketAddr::from_str("0.0.0.0:3030").unwrap();
+        let addr = net::SocketAddr::from_str(&format!("{:?}:{:?}", client_config.node.ip, client_config.node.port)).unwrap();
 
         Arbiter::spawn(
             TcpStream::connect(&addr)
-                .and_then(|stream| {
-                    let addr = MqClient::create(|ctx| {
-                        let (pk, _) = sign::gen_keypair();
-
+                .and_then(move |stream| {
+                    let addr = MqClient::create(move |ctx| {
                         let (r, w) = stream.split();
                         ctx.add_stream(FramedRead::new(r, codec::ClientMqCodec));
-                        ctx.add_message_stream(once(Ok(RegisterCommand(pk))));
+                        ctx.add_message_stream(once(Ok(RegisterCommand(client_config.public_key))));
                         MqClient {
                             framed: actix::io::FramedWrite::new(w, codec::ClientMqCodec, ctx),
                         }
