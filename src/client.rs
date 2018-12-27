@@ -21,12 +21,6 @@ const PING_TIME_SEC: u64 = 5;
 
 fn main() {
     sign::init();
-    let (pk, sk) = sign::gen_keypair();
-    println!(
-        "Running MQ client:\n PK: {}\n\nSK: {}\n",
-        sign::to_hex_pk(&pk),
-        sign::to_hex_sk(&sk)
-    );
 
     actix::System::run(|| {
         // Connect to server

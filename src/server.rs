@@ -1,4 +1,5 @@
 use crate::types::NodeAppConfig;
+use crate::sign;
 use actix::prelude::*;
 use actix::Message;
 use sodiumoxide::crypto::sign::ed25519::PublicKey;
@@ -41,7 +42,7 @@ pub struct Connect {
 ///
 /// MQ server returns unique session id
 impl actix::Message for Connect {
-    type Result = ();
+    type Result = Vec<String>;
 }
 
 /// Session is disconnected
@@ -57,14 +58,25 @@ pub struct MqMessage {
     pub msg: String,
 }
 
+/// Register client
+#[derive(Message)]
+pub struct MqRegister {
+    /// Client identifier
+    pub pub_key: PublicKey,
+}
+
 /// Handler for Connect message.
 ///
 /// Register new session and assign unique id to this session
 impl Handler<Connect> for MqServer {
-    type Result = ();
+    type Result = MessageResult<Connect>;
 
-    fn handle(&mut self, _msg: Connect, _: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
         println!("Handler<Connect>");
+        let (pk, _) = sign::gen_keypair();
+        self.sessions.insert(pk, msg.addr);
+        let res = vec![];
+        MessageResult(res)
     }
 }
 
@@ -87,5 +99,19 @@ impl Handler<MqMessage> for MqServer {
             let message: String = format!("Response message for: {:?}", msg.msg);
             addr.do_send(session::MqSessionMessage(message.to_owned()))
         }
+    }
+}
+
+/// Handler for Register message.
+impl Handler<MqRegister> for MqServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: MqRegister, _: &mut Context<Self>) {
+        println!("Handler<Register>");/*
+        self.sessions.insert();
+        if let Some(addr) = self.sessions.get(&msg.pub_key) {
+            let message: String = format!("Response message for: {:?}", msg.msg);
+            addr.do_send(session::MqSessionMessage(message.to_owned()))
+        }*/
     }
 }

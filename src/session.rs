@@ -21,7 +21,7 @@ pub struct MqSessionMessage(pub String);
 /// `MqSession` actor is responsible for tcp peer communications.
 pub struct MqSession {
     /// MQ session NodePublicKey
-    pub_key: PublicKey,
+    pub_key: Option<PublicKey>,
     /// this is address of MQ server
     addr: Addr<MqServer>,
     /// Client must send ping at least once per 10 seconds, otherwise we drop
@@ -75,18 +75,23 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
     fn handle(&mut self, msg: MqRequest, _: &mut Self::Context) {
         match msg {
             MqRequest::Message(message) => {
+                if self.pub_key.is_none() {
+                    eprintln!("MqRequest::Message - pub_key not sets");
+                    return;
+                }
                 // Send message to MQ server
                 println!("Peer message: {}", message);
                 self.addr.do_send(server::MqMessage {
-                    pub_key: self.pub_key,
+                    pub_key: self.pub_key.unwrap(),
                     msg: message,
                 })
             }
             // we update heartbeat time on ping from peer
             MqRequest::Ping => self.hb = { Instant::now() },
             MqRequest::Register(pk) => {
-                println!("PubKey: {}", sign::to_hex_pk(&pk));
-                /*                self.addr.do_send(server::MqMessage {
+                println!("Register pub_key: {}", sign::to_hex_pk(&pk));
+                self.pub_key = Some(pk);
+/*                self.addr.do_send(server::MqMessage {
                     id: self.id,
                     msg: message,
                 })*/
@@ -111,9 +116,8 @@ impl MqSession {
         addr: Addr<MqServer>,
         framed: FramedWrite<WriteHalf<TcpStream>, MqCodec>,
     ) -> MqSession {
-        let pk = PublicKey::from_slice(&[0; 32]).unwrap();
         MqSession {
-            pub_key: pk,
+            pub_key: None,
             addr,
             framed,
             hb: Instant::now(),
