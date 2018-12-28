@@ -50,7 +50,7 @@ impl Actor for MqSession {
             .then(|res, _act, ctx| {
                 match res {
                     Ok(_pk) => {
-                        // act.pub_ket = pk
+                        // act.pub_key = pk
                     }
                     // something is wrong with MQ server
                     _ => ctx.stop(),

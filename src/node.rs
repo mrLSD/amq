@@ -86,7 +86,7 @@ fn main() {
     check_commands();
     let node_config = NodeAppConfig::new(&read_config());
 
-    actix::System::run(|| {
+    actix::System::run(move || {
         // Start server actor
         let server = MqServer::new(node_config.clone()).start();
 
@@ -104,7 +104,6 @@ fn main() {
                 let addr = stream.peer_addr().unwrap();
                 TcpConnect(stream, addr)
             }));
-            let _cfg = node_config;
             Server { server: server }
         });
 

@@ -5,6 +5,7 @@ use std::fs;
 use toml;
 
 use actix::prelude::*;
+use futures::stream::once;
 use futures::Future;
 use std::str::FromStr;
 use std::time::Duration;
@@ -22,28 +23,31 @@ fn main() {
     sign::init();
     let (pk, sk) = sign::gen_keypair();
     println!(
-        "Running MQ client:\n PK: {}\nSK: {}",
+        "Running MQ client:\n PK: {}\n\nSK: {}\n",
         sign::to_hex_pk(&pk),
         sign::to_hex_sk(&sk)
     );
 
     actix::System::run(|| {
         // Connect to server
-        let addr = net::SocketAddr::from_str("127.0.0.1:3000").unwrap();
+        let addr = net::SocketAddr::from_str("0.0.0.0:3030").unwrap();
 
         Arbiter::spawn(
             TcpStream::connect(&addr)
                 .and_then(|stream| {
                     let addr = MqClient::create(|ctx| {
+                        let (pk, _) = sign::gen_keypair();
+
                         let (r, w) = stream.split();
                         ctx.add_stream(FramedRead::new(r, codec::ClientMqCodec));
+                        ctx.add_message_stream(once(Ok(RegisterCommand(pk))));
                         MqClient {
                             framed: actix::io::FramedWrite::new(w, codec::ClientMqCodec, ctx),
                         }
                     });
 
                     // start console loop
-                    let addr1 = addr.clone();
+                    let addr_to_send = addr.clone();
                     thread::spawn(move || loop {
                         let mut cmd = String::new();
                         if let Err(msg) = io::stdin().read_line(&mut cmd) {
@@ -51,15 +55,7 @@ fn main() {
                             return;
                         }
 
-                        addr1.do_send(ClientCommand(cmd));
-                    });
-
-                    // Register current node
-                    let addr1 = addr.clone();
-                    thread::spawn(move || {
-                        let (pk, _) = sign::gen_keypair();
-
-                        addr1.do_send(RegisterCommand(pk));
+                        addr_to_send.do_send(ClientCommand(cmd));
                     });
 
                     futures::future::ok(())
