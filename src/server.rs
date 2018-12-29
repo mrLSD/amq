@@ -1,7 +1,9 @@
 use actix::prelude::*;
+use actix::Message;
 use rand::{self, Rng};
-use session;
 use std::collections::HashMap;
+
+use crate::session;
 
 /// `MqServer` manages MQ network and
 /// responsible for network nodes

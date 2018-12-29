@@ -2,7 +2,7 @@
 name = "actix-mq-network"
 version = "0.1.0"
 authors = ["Evgeny Ukhanov <mrlsd@ya.ru>"]
-# edition = "2018"
+edition = "2018"
 
 [[bin]]
 name = "server"

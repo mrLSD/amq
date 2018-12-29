@@ -1,23 +1,3 @@
-#![allow(unused_imports)]
-#[macro_use]
-extern crate actix;
-extern crate byteorder;
-extern crate bytes;
-extern crate futures;
-extern crate rand;
-extern crate serde;
-extern crate serde_json;
-extern crate tokio;
-extern crate tokio_codec;
-extern crate tokio_io;
-extern crate tokio_tcp;
-#[macro_use]
-extern crate serde_derive;
-
-mod codec;
-mod server;
-mod session;
-
 use actix::io::FramedWrite;
 use actix::prelude::*;
 use futures::Stream;
@@ -27,9 +7,13 @@ use tokio_codec::FramedRead;
 use tokio_io::AsyncRead;
 use tokio_tcp::{TcpListener, TcpStream};
 
-use codec::MqCodec;
-use server::MqServer;
-use session::MqSession;
+mod codec;
+mod server;
+mod session;
+
+use crate::codec::MqCodec;
+use crate::server::MqServer;
+use crate::session::MqSession;
 
 /// Define tcp server that will accept incoming tcp
 /// connection and create MQ actors.
