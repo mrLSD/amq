@@ -92,7 +92,7 @@ impl Handler<MqMessage> for MqServer {
         println!("Handler<Message>");
         if let Some(addr) = self.sessions.get(&msg.id) {
             let message: String = format!("Response message for: {:?}", msg.msg);
-            addr.do_send(session::MqMessage(message.to_owned()))
+            addr.do_send(session::MqSessionMessage(message.to_owned()))
         }
     }
 }

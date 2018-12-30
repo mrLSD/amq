@@ -14,13 +14,17 @@ test:
 check:
 	@cargo check
 
-run:
-	@echo "Build..."
-	@cargo run
+client:
+	@echo "Run Client"
+	@cargo run --bin client
+
+server:
+	@echo "Run Server"
+	@cargo run --bin server
 
 build:
 	@echo Build debug version...
-	@RUSTFLAGS="-D warnings" cargo build
+	@cargo build
 	@echo Done.
 
 release:
@@ -30,9 +34,6 @@ release:
 
 fmt:
 	@cargo fmt
-
-clippy:
-	@cargo clippy
 
 kcov:
 	@docker run --rm --security-opt seccomp=unconfined -v $(pwd):/app -w /app ragnaroek/kcov:v33

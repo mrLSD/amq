@@ -13,7 +13,7 @@ const PING_WAIT_SEC: u64 = 15;
 
 /// MQ server sends this messages to session
 #[derive(Message)]
-pub struct MqMessage(pub String);
+pub struct MqSessionMessage(pub String);
 
 /// `MqSession` actor is responsible for tcp peer communications.
 pub struct MqSession {
@@ -84,10 +84,10 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
 
 /// Handler for MqMessage, MqServer sends this message,
 /// we just send string to peer
-impl Handler<MqMessage> for MqSession {
+impl Handler<MqSessionMessage> for MqSession {
     type Result = ();
 
-    fn handle(&mut self, msg: MqMessage, _: &mut Self::Context) {
+    fn handle(&mut self, msg: MqSessionMessage, _: &mut Self::Context) {
         // Send message to peer
         self.framed.write(MqResponse::Message(msg.0));
     }
