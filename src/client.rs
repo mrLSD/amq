@@ -1,4 +1,5 @@
 mod codec;
+mod sign;
 
 use actix::prelude::*;
 use futures::Future;
@@ -15,6 +16,7 @@ use sodiumoxide::crypto::sign::ed25519;
 const PING_TIME_SEC: u64 = 5;
 
 fn main() {
+    sign::init();
     let (_pk, _sk) = ed25519::gen_keypair();
     //println!("Running MQ client:\n SK: {:X?}\n PK: {:X?}", sk.0, pk.0);
 
