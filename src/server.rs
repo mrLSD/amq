@@ -25,7 +25,7 @@ impl Actor for MqServer {
     type Context = Context<Self>;
 }
 
-/// Message for chat server communications
+/// Message for MQ server communications
 
 /// New MQ session is created
 pub struct Connect {
@@ -67,7 +67,7 @@ impl Handler<Connect> for MqServer {
 
         println!("Handler<Connect> | id: {:?}", id);
 
-        // send id back
+        // Return ID
         id
     }
 }
@@ -88,7 +88,11 @@ impl Handler<Disconnect> for MqServer {
 impl Handler<MqMessage> for MqServer {
     type Result = ();
 
-    fn handle(&mut self, _msg: MqMessage, _: &mut Context<Self>) {
+    fn handle(&mut self, msg: MqMessage, _: &mut Context<Self>) {
         println!("Handler<Message>");
+        if let Some(addr) = self.sessions.get(&msg.id) {
+            let message: String = format!("Response message for: {:?}", msg.msg);
+            addr.do_send(session::MqMessage(message.to_owned()))
+        }
     }
 }

@@ -67,7 +67,6 @@ impl WriteHandler<io::Error> for MqSession {}
 impl StreamHandler<MqRequest, io::Error> for MqSession {
     /// This is main event loop for client requests
     fn handle(&mut self, msg: MqRequest, _: &mut Self::Context) {
-        println!("StreamHandler<MqRequest>");
         match msg {
             MqRequest::Message(message) => {
                 // Send message to MQ server
@@ -78,13 +77,19 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
                 })
             }
             // we update heartbeat time on ping from peer
-            MqRequest::Ping => {
-                self.hb = {
-                    println!("Peer PING");
-                    Instant::now()
-                }
-            }
+            MqRequest::Ping => self.hb = { Instant::now() },
         }
+    }
+}
+
+/// Handler for MqMessage, MqServer sends this message,
+/// we just send string to peer
+impl Handler<MqMessage> for MqSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: MqMessage, _: &mut Self::Context) {
+        // Send message to peer
+        self.framed.write(MqResponse::Message(msg.0));
     }
 }
 
