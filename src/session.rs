@@ -8,6 +8,9 @@ use tokio_tcp::TcpStream;
 use codec::{MqCodec, MqRequest, MqResponse};
 use server::{self, MqServer};
 
+const PING_TIME_SEC: u64 = 5;
+const PING_WAIT_SEC: u64 = 15;
+
 /// MQ server sends this messages to session
 #[derive(Message)]
 pub struct MqMessage(pub String);
@@ -75,10 +78,12 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
                 })
             }
             // we update heartbeat time on ping from peer
-            MqRequest::Ping => self.hb = {
-                println!("Peer PING");
-                Instant::now()
-            },
+            MqRequest::Ping => {
+                self.hb = {
+                    println!("Peer PING");
+                    Instant::now()
+                }
+            }
         }
     }
 }
@@ -100,9 +105,9 @@ impl MqSession {
     ///
     /// also this method check heartbeats from client
     fn hb(&self, ctx: &mut actix::Context<Self>) {
-        ctx.run_later(Duration::new(1, 0), |act, ctx| {
+        ctx.run_later(Duration::new(PING_TIME_SEC, 0), |act, ctx| {
             // check client heartbeats
-            if Instant::now().duration_since(act.hb) > Duration::new(10, 0) {
+            if Instant::now().duration_since(act.hb) > Duration::new(PING_WAIT_SEC, 0) {
                 // heartbeat timed out
                 println!("Client heartbeat failed, disconnecting!");
 

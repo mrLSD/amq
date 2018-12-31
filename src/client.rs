@@ -23,6 +23,8 @@ use tokio_io::io::WriteHalf;
 use tokio_io::AsyncRead;
 use tokio_tcp::TcpStream;
 
+const PING_TIME_SEC: u64 = 5;
+
 fn main() {
     println!("Running MQ client");
 
@@ -89,7 +91,7 @@ impl Actor for MqClient {
 
 impl MqClient {
     fn hb(&self, ctx: &mut Context<Self>) {
-        ctx.run_later(Duration::new(1, 0), |act, ctx| {
+        ctx.run_later(Duration::new(PING_TIME_SEC, 0), |act, ctx| {
             act.framed.write(codec::MqRequest::Ping);
             act.hb(ctx);
         });
@@ -130,9 +132,7 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
             codec::MqResponse::Message(ref msg) => {
                 println!("message: {}", msg);
             }
-            codec::MqResponse::Pong => {
-                println!("PONG");
-            }
+            codec::MqResponse::Pong => {}
         }
     }
 }
