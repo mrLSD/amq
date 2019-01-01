@@ -1,9 +1,9 @@
+use hex;
 use sodiumoxide::crypto::{
     hash::sha256,
     sign::ed25519,
-    sign::ed25519::{PublicKey, SecretKey, Signature, Seed}
+    sign::ed25519::{PublicKey, SecretKey, Seed, Signature},
 };
-use hex;
 
 /// Initializes the sodium library and automatically selects faster versions
 /// of the primitives, if possible.
@@ -36,8 +36,14 @@ pub fn verify(sig: &Signature, data: &[u8], pub_key: &PublicKey) -> bool {
     ed25519::verify_detached(sig, data, pub_key)
 }
 
-pub fn encode() -> String {
-    hex::encode()
+/// Returns a hex representation of binary data.
+pub fn to_hex_pk(pk: &PublicKey) -> String {
+    hex::encode(&pk[..])
+}
+
+/// Returns a hex representation of binary data.
+pub fn to_hex_sk(pk: &SecretKey) -> String {
+    hex::encode(&pk[..])
 }
 
 /*
