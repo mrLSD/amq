@@ -47,7 +47,12 @@ pub struct Disconnect {
 
 /// Send message to specific node
 #[derive(Message)]
-pub struct MqMessage;
+pub struct MqMessage {
+    /// Id of the client session
+    pub id: usize,
+    /// Peer message
+    pub msg: String,
+}
 
 /// Handler for Connect message.
 ///
@@ -83,7 +88,7 @@ impl Handler<Disconnect> for MqServer {
 impl Handler<MqMessage> for MqServer {
     type Result = ();
 
-    fn handle(&mut self, msg: MqMessage, _: &mut Context<Self>) {
+    fn handle(&mut self, _msg: MqMessage, _: &mut Context<Self>) {
         println!("Handler<Message>");
     }
 }

@@ -8,6 +8,7 @@ extern crate rand;
 extern crate serde;
 extern crate serde_json;
 extern crate tokio;
+extern crate tokio_codec;
 extern crate tokio_io;
 extern crate tokio_tcp;
 #[macro_use]
@@ -17,12 +18,18 @@ mod codec;
 mod server;
 mod session;
 
+use actix::io::FramedWrite;
 use actix::prelude::*;
 use futures::Stream;
-use server::MqServer;
 use std::net;
 use std::str::FromStr;
+use tokio_codec::FramedRead;
+use tokio_io::AsyncRead;
 use tokio_tcp::{TcpListener, TcpStream};
+
+use codec::MqCodec;
+use server::MqServer;
+use session::MqSession;
 
 /// Define tcp server that will accept incoming tcp
 /// connection and create MQ actors.
@@ -45,8 +52,16 @@ impl Handler<TcpConnect> for Server {
     /// in this case we just return unit.
     type Result = ();
 
-    fn handle(&mut self, _msg: TcpConnect, _: &mut Context<Self>) {
+    fn handle(&mut self, msg: TcpConnect, _: &mut Context<Self>) {
         println!("Handler<TcpConnect>");
+        // For each incoming connection we create `MqSession` actor
+        // with out MQ server address.
+        let server = self.server.clone();
+        MqSession::create(move |ctx| {
+            let (r, w) = msg.0.split();
+            MqSession::add_stream(FramedRead::new(r, MqCodec), ctx);
+            MqSession::new(server, FramedWrite::new(w, MqCodec, ctx))
+        });
     }
 }
 
