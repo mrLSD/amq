@@ -87,6 +87,6 @@ fn main() {
             Server { server: server }
         });
 
-        println!("Running chat MQ server...");
+        println!("Running MQ server...");
     });
 }

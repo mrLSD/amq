@@ -63,7 +63,8 @@ impl WriteHandler<io::Error> for MqSession {}
 /// To use `Framed` with an actor, we have to implement `StreamHandler` trait
 impl StreamHandler<MqRequest, io::Error> for MqSession {
     /// This is main event loop for client requests
-    fn handle(&mut self, msg: MqRequest, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: MqRequest, _: &mut Self::Context) {
+        println!("StreamHandler<MqRequest>");
         match msg {
             MqRequest::Message(message) => {
                 // Send message to MQ server
@@ -74,7 +75,10 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
                 })
             }
             // we update heartbeat time on ping from peer
-            MqRequest::Ping => self.hb = Instant::now(),
+            MqRequest::Ping => self.hb = {
+                println!("Peer PING");
+                Instant::now()
+            },
         }
     }
 }

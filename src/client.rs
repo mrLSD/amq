@@ -103,6 +103,8 @@ impl Handler<ClientCommand> for MqClient {
     type Result = ();
 
     fn handle(&mut self, msg: ClientCommand, _: &mut Context<Self>) {
+        println!("Handler<ClientCommand>");
+
         let m = msg.0.trim();
 
         // we check for /sss type of messages
@@ -123,6 +125,7 @@ impl Handler<ClientCommand> for MqClient {
 /// Server communication
 impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
     fn handle(&mut self, msg: codec::MqResponse, _: &mut Context<Self>) {
+        println!("StreamHandler<codec::MqResponse>");
         match msg {
             codec::MqResponse::Message(ref msg) => {
                 println!("message: {}", msg);

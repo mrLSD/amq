@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use byteorder::{BigEndian, ByteOrder};
 use bytes::{BufMut, BytesMut};
 use serde_json as json;

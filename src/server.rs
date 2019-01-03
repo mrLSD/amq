@@ -49,7 +49,7 @@ pub struct Disconnect {
 #[derive(Message)]
 pub struct MqMessage {
     /// Id of the client session
-    pub id: usize,
+    pub id: u64,
     /// Peer message
     pub msg: String,
 }
@@ -61,11 +61,11 @@ impl Handler<Connect> for MqServer {
     type Result = u64;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-        println!("Handler<Connect>");
-
         // register session with random id
         let id = rand::thread_rng().gen::<u64>();
         self.sessions.insert(id, msg.addr);
+
+        println!("Handler<Connect> | id: {:?}", id);
 
         // send id back
         id
