@@ -1,15 +1,20 @@
 use actix::prelude::*;
 use rand::{self, Rng};
 use session;
+use std::collections::HashMap;
 
 /// `MqServer` manages MQ network and
 /// responsible for network nodes
 /// coordinating.
-pub struct MqServer;
+pub struct MqServer {
+    sessions: HashMap<u64, Addr<session::MqSession>>,
+}
 
 impl Default for MqServer {
     fn default() -> MqServer {
-        MqServer {}
+        MqServer {
+            sessions: HashMap::new(),
+        }
     }
 }
 
@@ -51,7 +56,7 @@ impl Handler<Connect> for MqServer {
     type Result = u64;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-        println!("Connection message: {:#?}", msg);
+        println!("Handler<Connect>");
 
         // register session with random id
         let id = rand::thread_rng().gen::<u64>();
@@ -67,12 +72,10 @@ impl Handler<Disconnect> for MqServer {
     type Result = ();
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
-        println!("Disconnecting message: {:#?}", msg);
+        println!("Handler<Disconnect> | id: {:#?}", msg.id);
 
         // remove address
-        if self.sessions.remove(&msg.id).is_some() {
-            sessions.remove(&msg.id);
-        }
+        self.sessions.remove(&msg.id);
     }
 }
 
@@ -81,6 +84,6 @@ impl Handler<MqMessage> for MqServer {
     type Result = ();
 
     fn handle(&mut self, msg: MqMessage, _: &mut Context<Self>) {
-        println!("Handler<Message> - sending message: {:#?}", msg);
+        println!("Handler<Message>");
     }
 }
