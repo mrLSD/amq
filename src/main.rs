@@ -5,6 +5,12 @@ extern crate futures;
 extern crate tokio;
 extern crate tokio_io;
 extern crate tokio_tcp;
+extern crate byteorder;
+extern crate bytes;
+extern crate serde;
+extern crate serde_json;
+#[macro_use]
+extern crate serde_derive;
 
 mod codec;
 mod server;

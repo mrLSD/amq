@@ -6,7 +6,7 @@ use tokio_io::io::WriteHalf;
 use tokio_tcp::TcpStream;
 
 use codec::{MqCodec, MqRequest, MqResponse};
-use server::MqServer;
+use server::{self, MqServer};
 
 /// MQ server sends this messages to session
 #[derive(Message)]
@@ -64,12 +64,34 @@ impl MqSession {
     pub fn new(
         addr: Addr<MqServer>,
         framed: FramedWrite<WriteHalf<TcpStream>, MqCodec>,
-    ) -> ChatSession {
-        ChatSession {
+    ) -> MqSession {
+        MqSession {
             addr,
             framed,
             id: 0,
             hb: Instant::now(),
         }
+    }
+
+    /// helper method that sends ping to client every second.
+    ///
+    /// also this method check heartbeats from client
+    fn hb(&self, ctx: &mut actix::Context<Self>) {
+        ctx.run_later(Duration::new(1, 0), |act, ctx| {
+            // check client heartbeats
+            if Instant::now().duration_since(act.hb) > Duration::new(10, 0) {
+                // heartbeat timed out
+                println!("Client heartbeat failed, disconnecting!");
+
+                // notify chat server
+                act.addr.do_send(server::Disconnect { id: act.id });
+
+                // stop actor
+                ctx.stop();
+            }
+
+            act.framed.write(ChatResponse::Ping);
+            act.hb(ctx);
+        });
     }
 }
