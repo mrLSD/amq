@@ -7,6 +7,8 @@ extern crate tokio_io;
 extern crate tokio_tcp;
 
 mod server;
+mod codec;
+mod session;
 
 use actix::prelude::*;
 use futures::Stream;
@@ -36,7 +38,9 @@ impl Handler<TcpConnect> for Server {
     /// in this case we just return unit.
     type Result = ();
 
-    fn handle(&mut self, _msg: TcpConnect, _: &mut Context<Self>) {}
+    fn handle(&mut self, _msg: TcpConnect, _: &mut Context<Self>) {
+        println!("Handler<TcpConnect>");
+    }
 }
 
 fn main() {
@@ -54,9 +58,11 @@ fn main() {
         // items So to be able to handle this events `Server` actor has to implement
         // stream handler `StreamHandler<(TcpStream, net::SocketAddr), io::Error>`
         Server::create(|ctx| {
-            ctx.add_message_stream(listener.incoming().map_err(|_| ()).map(|st| {
-                let addr = st.peer_addr().unwrap();
-                TcpConnect(st, addr)
+            ctx.add_message_stream(listener
+                .incoming().map_err(|_| ())
+                .map(|stream| {
+                let addr = stream.peer_addr().unwrap();
+                TcpConnect(stream, addr)
             }));
             Server { server: server }
         });
