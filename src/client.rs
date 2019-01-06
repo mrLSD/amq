@@ -53,7 +53,8 @@ fn main() {
                     });
 
                     futures::future::ok(())
-                }).map_err(|e| {
+                })
+                .map_err(|e| {
                     println!("Can not connect to server: {:?}", e);
                     process::exit(1)
                 }),

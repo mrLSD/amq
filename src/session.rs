@@ -1,11 +1,12 @@
+use actix::io::{FramedWrite, WriteHandler};
 use actix::prelude::*;
-use actix::io::FramedWrite;
+use std::io;
 use std::time::{Duration, Instant};
 use tokio_io::io::WriteHalf;
 use tokio_tcp::TcpStream;
 
-use codec::{MqRequest, MqResponse};
-use server::{MqServer};
+use codec::{MqCodec, MqRequest, MqResponse};
+use server::MqServer;
 
 /// MQ server sends this messages to session
 #[derive(Message)]
@@ -54,5 +55,21 @@ impl Actor for MqSession {
         // notify MQ server
         self.addr.do_send(server::Disconnect { id: self.id });
         Running::Stop
+    }
+}
+
+impl WriteHandler<io::Error> for MqSession {}
+
+impl MqSession {
+    pub fn new(
+        addr: Addr<MqServer>,
+        framed: FramedWrite<WriteHalf<TcpStream>, MqCodec>,
+    ) -> ChatSession {
+        ChatSession {
+            addr,
+            framed,
+            id: 0,
+            hb: Instant::now(),
+        }
     }
 }

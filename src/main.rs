@@ -6,8 +6,8 @@ extern crate tokio;
 extern crate tokio_io;
 extern crate tokio_tcp;
 
-mod server;
 mod codec;
+mod server;
 mod session;
 
 use actix::prelude::*;
@@ -58,9 +58,7 @@ fn main() {
         // items So to be able to handle this events `Server` actor has to implement
         // stream handler `StreamHandler<(TcpStream, net::SocketAddr), io::Error>`
         Server::create(|ctx| {
-            ctx.add_message_stream(listener
-                .incoming().map_err(|_| ())
-                .map(|stream| {
+            ctx.add_message_stream(listener.incoming().map_err(|_| ()).map(|stream| {
                 let addr = stream.peer_addr().unwrap();
                 TcpConnect(stream, addr)
             }));

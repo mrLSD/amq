@@ -25,7 +25,7 @@ pub enum MqResponse {
 }
 
 /// Codec for Client -> Server transport
-/*pub struct MqCodec;
+pub struct MqCodec;
 
 impl Decoder for MqCodec {
     type Item = MqRequest;
@@ -64,7 +64,7 @@ impl Encoder for MqCodec {
         Ok(())
     }
 }
-*/
+
 /// Codec for Server -> Client transport
 pub struct ClientMqCodec;
 
