@@ -1,4 +1,5 @@
 use actix::prelude::*;
+use rand::{self, Rng};
 use session;
 
 /// `MqServer` manages MQ network and
@@ -41,4 +42,45 @@ pub struct Disconnect {
 
 /// Send message to specific node
 #[derive(Message)]
-pub struct Message;
+pub struct MqMessage;
+
+/// Handler for Connect message.
+///
+/// Register new session and assign unique id to this session
+impl Handler<Connect> for MqServer {
+    type Result = u64;
+
+    fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
+        println!("Connection message: {:#?}", msg);
+
+        // register session with random id
+        let id = rand::thread_rng().gen::<u64>();
+        self.sessions.insert(id, msg.addr);
+
+        // send id back
+        id
+    }
+}
+
+/// Handler for Disconnect message.
+impl Handler<Disconnect> for MqServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
+        println!("Disconnecting message: {:#?}", msg);
+
+        // remove address
+        if self.sessions.remove(&msg.id).is_some() {
+            sessions.remove(&msg.id);
+        }
+    }
+}
+
+/// Handler for Message message.
+impl Handler<MqMessage> for MqServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: MqMessage, _: &mut Context<Self>) {
+        println!("Handler<Message> - sending message: {:#?}", msg);
+    }
+}

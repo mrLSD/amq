@@ -1,14 +1,15 @@
 #![allow(unused_imports)]
 #[macro_use]
 extern crate actix;
+extern crate byteorder;
+extern crate bytes;
 extern crate futures;
+extern crate serde;
+extern crate serde_json;
 extern crate tokio;
 extern crate tokio_io;
 extern crate tokio_tcp;
-extern crate byteorder;
-extern crate bytes;
-extern crate serde;
-extern crate serde_json;
+extern crate rand;
 #[macro_use]
 extern crate serde_derive;
 

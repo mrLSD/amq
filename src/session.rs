@@ -83,14 +83,14 @@ impl MqSession {
                 // heartbeat timed out
                 println!("Client heartbeat failed, disconnecting!");
 
-                // notify chat server
+                // notify MQ server
                 act.addr.do_send(server::Disconnect { id: act.id });
 
                 // stop actor
                 ctx.stop();
             }
 
-            act.framed.write(ChatResponse::Ping);
+            act.framed.write(MqResponse::Pong);
             act.hb(ctx);
         });
     }
