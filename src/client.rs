@@ -10,10 +10,13 @@ use tokio_io::io::WriteHalf;
 use tokio_io::AsyncRead;
 use tokio_tcp::TcpStream;
 
+use sodiumoxide::crypto::sign::ed25519;
+
 const PING_TIME_SEC: u64 = 5;
 
 fn main() {
-    println!("Running MQ client");
+    let (_pk, _sk) = ed25519::gen_keypair();
+    //println!("Running MQ client:\n SK: {:X?}\n PK: {:X?}", sk.0, pk.0);
 
     actix::System::run(|| {
         // Connect to server
