@@ -4,9 +4,6 @@ use std::env;
 use std::fs;
 use toml;
 
-use std::io::Write;
-
-
 mod sign;
 
 /// Basic config types
@@ -56,20 +53,15 @@ fn main() {
     };
 
     // Generate config
-    let cfg = generate_config_date(config_type);
+    let cfg_toml = generate_config_date(config_type);
 
     // Get TOML config data
-    let cfg_toml = toml::to_string_pretty(&cfg).unwrap();
-
     println!("{}", cfg_toml);
 
     // Save config to file
-//    if let Err(err) = fs::write(config_file, cfg_toml) {
-//        eprintln!("Failed to create config file: {}", err);
-//    }
-
-    let mut file = std::fs::File::create("1.toml").unwrap();
-    file.write_all(cfg_toml.as_bytes()).expect("Could not write to file!");
+    if let Err(err) = fs::write(config_file, cfg_toml) {
+        eprintln!("Failed to create config file: {}", err);
+    }
 }
 
 /// Generate config data by specific ty[e
@@ -87,7 +79,7 @@ fn generate_config_date(config_type: AppConfigType) -> String {
                     port: 3030,
                 },
             };
-            toml::to_string(&cfg).unwrap()
+            toml::to_string_pretty(&cfg).unwrap()
         }
         AppConfigType::Node => {
             let cfg = NodeConfig {
@@ -95,7 +87,7 @@ fn generate_config_date(config_type: AppConfigType) -> String {
                 secret_key: sk,
                 port: 3030,
             };
-            toml::to_string(&cfg).unwrap()
+            toml::to_string_pretty(&cfg).unwrap()
         }
     }
 }
