@@ -1,5 +1,4 @@
 use serde_derive::Serialize;
-use sodiumoxide::crypto::sign::ed25519::{PublicKey, SecretKey};
 use std::env;
 use std::fs;
 use toml;
@@ -15,15 +14,15 @@ enum AppConfigType {
 /// Basic client config
 #[derive(Serialize)]
 pub struct ClientConfig {
-    pub public_key: PublicKey,
-    pub secret_key: SecretKey,
+    pub public_key: String,
+    pub secret_key: String,
     pub node: ClientNodeConfig,
 }
 
 /// Client config - node for connection
 #[derive(Serialize)]
 pub struct ClientNodeConfig {
-    pub public_key: PublicKey,
+    pub public_key: String,
     pub ip: String,
     pub port: u32,
 }
@@ -31,8 +30,8 @@ pub struct ClientNodeConfig {
 /// Basic Node configuration
 #[derive(Serialize)]
 pub struct NodeConfig {
-    pub public_key: PublicKey,
-    pub secret_key: SecretKey,
+    pub public_key: String,
+    pub secret_key: String,
     pub port: u32,
 }
 
@@ -71,10 +70,10 @@ fn generate_config_date(config_type: AppConfigType) -> String {
     match config_type {
         AppConfigType::Client => {
             let cfg = ClientConfig {
-                public_key: pk,
-                secret_key: sk,
+                public_key: sign::to_hex_pk(&pk),
+                secret_key: sign::to_hex_sk(&sk),
                 node: ClientNodeConfig {
-                    public_key: pk,
+                    public_key: sign::to_hex_pk(&pk),
                     ip: "127,0,0,1".to_string(),
                     port: 3030,
                 },
@@ -83,8 +82,8 @@ fn generate_config_date(config_type: AppConfigType) -> String {
         }
         AppConfigType::Node => {
             let cfg = NodeConfig {
-                public_key: pk,
-                secret_key: sk,
+                public_key: sign::to_hex_pk(&pk),
+                secret_key: sign::to_hex_sk(&sk),
                 port: 3030,
             };
             toml::to_string_pretty(&cfg).unwrap()

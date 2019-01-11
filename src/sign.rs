@@ -41,6 +41,7 @@ pub fn to_hex_pk(pk: &PublicKey) -> String {
     hex::encode(&pk[..])
 }
 
+/// Return PublicKey from hex string
 pub fn from_string_pk(hex: &String) -> PublicKey {
     let pk = hex::decode(hex).unwrap();
     PublicKey::from_slice(&pk).unwrap()
