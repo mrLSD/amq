@@ -1,3 +1,4 @@
+use serde::Serialize;
 use serde_derive::Serialize;
 use sodiumoxide::crypto::{
     sign::ed25519,
@@ -6,6 +7,8 @@ use sodiumoxide::crypto::{
 use std::env;
 use std::fs;
 use toml;
+
+mod sign;
 
 const DEFAULT_CONFIG_FILE: &str = "config.toml";
 const DEFAULT_CONFIG_TYPE: AppConfigType = AppConfigType::Client;
@@ -61,10 +64,7 @@ fn main() {
     };
 
     // Generate config
-    let cfg = match config_type {
-        AppConfigType::Client => {}
-        AppConfigType::Node => {}
-    };
+    let cfg = generate_config_date(config_type);
 
     // Get TOML config data
     let cfg_toml = toml::to_string(&cfg).unwrap();
@@ -72,5 +72,33 @@ fn main() {
     // Save config to file
     if let Err(err) = fs::write(config_file, &cfg_toml) {
         eprintln!("Failed to create config file: {}", err);
+    }
+}
+
+/// Generate config data by specific ty[e
+fn generate_config_date(config_type: AppConfigType) -> String {
+    let (pk, sk) = sign::gen_keypair();
+
+    match config_type {
+        AppConfigType::Client => {
+            let cfg = ClientConfig {
+                public_key: pk,
+                secret_key: sk,
+                node: ClientNodeConfig {
+                    public_key: pk,
+                    ip: "127,0,0,1".to_string(),
+                    port: 3030,
+                },
+            };
+            toml::to_string(&cfg).unwrap()
+        }
+        AppConfigType::Node => {
+            let cfg = NodeConfig {
+                public_key: pk,
+                secret_key: sk,
+                port: 3030,
+            };
+            toml::to_string(&cfg).unwrap()
+        }
     }
 }
