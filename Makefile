@@ -20,7 +20,8 @@ client:
 
 config:
 	@echo "Run configurator"
-	@cargo run --bin config
+	@cargo run --bin config node node.toml
+	@cargo run --bin config client client.toml
 
 server:
 	@echo "Run Server"
@@ -39,5 +40,3 @@ release:
 fmt:
 	@cargo fmt
 
-kcov:
-	@docker run --rm --security-opt seccomp=unconfined -v $(pwd):/app -w /app ragnaroek/kcov:v33
