@@ -4,6 +4,9 @@ use std::env;
 use std::fs;
 use toml;
 
+use std::io::Write;
+
+
 mod sign;
 
 /// Basic config types
@@ -49,19 +52,24 @@ fn main() {
                 panic!("Failed to fetch arguments");
             }
         };
-        (config_type, args.nth(2).unwrap())
+        (config_type, args.nth(0).unwrap())
     };
 
     // Generate config
     let cfg = generate_config_date(config_type);
 
     // Get TOML config data
-    let cfg_toml = toml::to_string(&cfg).unwrap();
+    let cfg_toml = toml::to_string_pretty(&cfg).unwrap();
+
+    println!("{}", cfg_toml);
 
     // Save config to file
-    if let Err(err) = fs::write(config_file, &cfg_toml) {
-        eprintln!("Failed to create config file: {}", err);
-    }
+//    if let Err(err) = fs::write(config_file, cfg_toml) {
+//        eprintln!("Failed to create config file: {}", err);
+//    }
+
+    let mut file = std::fs::File::create("1.toml").unwrap();
+    file.write_all(cfg_toml.as_bytes()).expect("Could not write to file!");
 }
 
 /// Generate config data by specific ty[e
