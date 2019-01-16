@@ -79,6 +79,7 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
             }
             // we update heartbeat time on ping from peer
             MqRequest::Ping => self.hb = { Instant::now() },
+            MqRequest::Register(_) => {},
         }
     }
 }

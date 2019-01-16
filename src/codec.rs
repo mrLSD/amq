@@ -5,6 +5,7 @@ use bytes::{BufMut, BytesMut};
 use serde_json as json;
 use std::io;
 use tokio_io::codec::{Decoder, Encoder};
+use sodiumoxide::crypto::sign::ed25519::PublicKey;
 
 use serde_derive::{Deserialize, Serialize};
 
@@ -16,6 +17,8 @@ pub enum MqRequest {
     Ping,
     /// Send message
     Message(String),
+    /// Register request
+    Register(PublicKey),
 }
 
 /// Server response

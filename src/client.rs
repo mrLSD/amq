@@ -1,6 +1,9 @@
 mod codec;
 mod sign;
 
+use toml;
+use std::fs;
+
 use actix::prelude::*;
 use futures::Future;
 use std::str::FromStr;
@@ -11,7 +14,7 @@ use tokio_io::io::WriteHalf;
 use tokio_io::AsyncRead;
 use tokio_tcp::TcpStream;
 
-use sodiumoxide::crypto::sign::ed25519;
+use sodiumoxide::crypto::sign::ed25519::PublicKey;
 
 const PING_TIME_SEC: u64 = 5;
 
@@ -67,6 +70,9 @@ struct MqClient {
 #[derive(Message)]
 struct ClientCommand(String);
 
+#[derive(Message)]
+struct RegisterCommand(PublicKey);
+
 impl Actor for MqClient {
     type Context = Context<Self>;
 
@@ -95,6 +101,17 @@ impl MqClient {
 }
 
 impl actix::io::WriteHandler<io::Error> for MqClient {}
+
+/// Handle Register commands
+impl Handler<RegisterCommand> for MqClient {
+    type Result = ();
+
+    fn handle(&mut self, _: RegisterCommand, _: &mut Context<Self>) {
+        let (pk, _) = sign::gen_keypair();
+        println!("Handler<RegisterCommand>: {}",sign::to_hex_pk(&pk));
+        self.framed.write(codec::MqRequest::Register(pk));
+    }
+}
 
 /// Handle stdin commands
 impl Handler<ClientCommand> for MqClient {
