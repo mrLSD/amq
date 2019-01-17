@@ -43,6 +43,7 @@ fn main() {
                     });
 
                     // start console loop
+                    let addr1 = addr.clone();
                     thread::spawn(move || loop {
                         let mut cmd = String::new();
                         if let Err(msg) = io::stdin().read_line(&mut cmd) {
@@ -50,7 +51,15 @@ fn main() {
                             return;
                         }
 
-                        addr.do_send(ClientCommand(cmd));
+                        addr1.do_send(ClientCommand(cmd));
+                    });
+
+                    // Register current node
+                    let addr1 = addr.clone();
+                    thread::spawn(move ||  {
+                        let (pk, _) = sign::gen_keypair();
+
+                        addr1.do_send(RegisterCommand(pk));
                     });
 
                     futures::future::ok(())

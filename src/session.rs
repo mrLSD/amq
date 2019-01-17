@@ -1,3 +1,5 @@
+mod sign;
+
 use actix::io::{FramedWrite, WriteHandler};
 use actix::prelude::*;
 use actix::Message;
@@ -79,7 +81,9 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
             }
             // we update heartbeat time on ping from peer
             MqRequest::Ping => self.hb = { Instant::now() },
-            MqRequest::Register(_) => {},
+            MqRequest::Register(pk) => {
+                println!("PubKey: {}", sign::to_hex_pk(&pk));
+            },
         }
     }
 }

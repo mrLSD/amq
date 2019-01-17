@@ -10,6 +10,7 @@ use tokio_tcp::{TcpListener, TcpStream};
 mod codec;
 mod server;
 mod session;
+mod sign;
 
 use crate::codec::MqCodec;
 use crate::server::MqServer;
