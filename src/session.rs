@@ -1,5 +1,3 @@
-mod sign;
-
 use actix::io::{FramedWrite, WriteHandler};
 use actix::prelude::*;
 use actix::Message;
@@ -10,6 +8,7 @@ use tokio_tcp::TcpStream;
 
 use crate::codec::{MqCodec, MqRequest, MqResponse};
 use crate::server::{self, MqServer};
+use crate::sign;
 
 const PING_TIME_SEC: u64 = 5;
 const PING_WAIT_SEC: u64 = 15;
@@ -37,6 +36,7 @@ impl Actor for MqSession {
     fn started(&mut self, ctx: &mut Self::Context) {
         // We'll start heartbeat process on session start.
         self.hb(ctx);
+        println!("Session started");
 
         // Register self in MQ server. `AsyncContext::wait` register
         // future within context, but context waits until this future resolves
@@ -48,7 +48,10 @@ impl Actor for MqSession {
             .into_actor(self)
             .then(|res, act, ctx| {
                 match res {
-                    Ok(res) => act.id = res,
+                    Ok(res) => {
+                        println!("Received ID: {}", res);
+                        act.id = res
+                    },
                     // something is wrong with MQ server
                     _ => ctx.stop(),
                 }
@@ -83,6 +86,10 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
             MqRequest::Ping => self.hb = { Instant::now() },
             MqRequest::Register(pk) => {
                 println!("PubKey: {}", sign::to_hex_pk(&pk));
+/*                self.addr.do_send(server::MqMessage {
+                    id: self.id,
+                    msg: message,
+                })*/
             },
         }
     }

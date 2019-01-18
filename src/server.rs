@@ -60,17 +60,18 @@ pub struct MqMessage {
 ///
 /// Register new session and assign unique id to this session
 impl Handler<Connect> for MqServer {
-    type Result = u64;
+    type Result = ();
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
+        println!("Handler<Connect>");
         // register session with random id
-        let id = rand::thread_rng().gen::<u64>();
+        /*let id = rand::thread_rng().gen::<u64>();
         self.sessions.insert(id, msg.addr);
 
         println!("Handler<Connect> | id: {:?}", id);
 
         // Return ID
-        id
+        id*/
     }
 }
 
@@ -82,7 +83,7 @@ impl Handler<Disconnect> for MqServer {
         println!("Handler<Disconnect> | id: {:#?}", msg.id);
 
         // remove address
-        self.sessions.remove(&msg.id);
+        //self.sessions.remove(&msg.id);
     }
 }
 

@@ -39,6 +39,7 @@ fn main() {
                         ctx.add_stream(FramedRead::new(r, codec::ClientMqCodec));
                         MqClient {
                             framed: actix::io::FramedWrite::new(w, codec::ClientMqCodec, ctx),
+                            tst: 1,
                         }
                     });
 
@@ -74,6 +75,7 @@ fn main() {
 
 struct MqClient {
     framed: actix::io::FramedWrite<WriteHalf<TcpStream>, codec::ClientMqCodec>,
+    tst: u8,
 }
 
 #[derive(Message)]
