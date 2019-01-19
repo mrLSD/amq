@@ -38,7 +38,7 @@ pub struct Connect {
 ///
 /// MQ server returns unique session id
 impl actix::Message for Connect {
-    type Result = u64;
+    type Result = ();
 }
 
 /// Session is disconnected

@@ -5,6 +5,7 @@ use std::io;
 use std::time::{Duration, Instant};
 use tokio_io::io::WriteHalf;
 use tokio_tcp::TcpStream;
+use sodiumoxide::crypto::sign::ed25519::PublicKey;
 
 use crate::codec::{MqCodec, MqRequest, MqResponse};
 use crate::server::{self, MqServer};
@@ -19,8 +20,8 @@ pub struct MqSessionMessage(pub String);
 
 /// `MqSession` actor is responsible for tcp peer communications.
 pub struct MqSession {
-    /// MQ session unique ID
-    id: u64,
+    /// MQ session NodePublicKey
+    pub_key: PublicKey,
     /// this is address of MQ server
     addr: Addr<MqServer>,
     /// Client must send ping at least once per 10 seconds, otherwise we drop
@@ -49,8 +50,8 @@ impl Actor for MqSession {
             .then(|res, act, ctx| {
                 match res {
                     Ok(res) => {
-                        println!("Received ID: {}", res);
-                        act.id = res
+//                        println!("Received ID: {}", res);
+//                        act.id = res
                     },
                     // something is wrong with MQ server
                     _ => ctx.stop(),

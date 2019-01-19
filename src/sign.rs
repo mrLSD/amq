@@ -41,6 +41,10 @@ pub fn to_hex_pk(pk: &PublicKey) -> String {
     hex::encode(&pk[..])
 }
 
+pub fn from_string_pk(hex: &String) -> PublicKey {
+    hex::decode(hex).unwrap()
+}
+
 /// Returns a hex representation of binary data.
 pub fn to_hex_sk(pk: &SecretKey) -> String {
     hex::encode(&pk[..])
