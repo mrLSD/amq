@@ -42,7 +42,8 @@ pub fn to_hex_pk(pk: &PublicKey) -> String {
 }
 
 pub fn from_string_pk(hex: &String) -> PublicKey {
-    hex::decode(hex).unwrap()
+    let pk = hex::decode(hex).unwrap();
+    PublicKey::from_slice(&pk).unwrap()
 }
 
 /// Returns a hex representation of binary data.

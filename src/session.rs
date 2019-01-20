@@ -63,7 +63,7 @@ impl Actor for MqSession {
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
         // notify MQ server
-        self.addr.do_send(server::Disconnect { id: self.id });
+        self.addr.do_send(server::Disconnect { });
         Running::Stop
     }
 }
@@ -79,7 +79,6 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
                 // Send message to MQ server
                 println!("Peer message: {}", message);
                 self.addr.do_send(server::MqMessage {
-                    id: self.id,
                     msg: message,
                 })
             }
@@ -112,10 +111,11 @@ impl MqSession {
         addr: Addr<MqServer>,
         framed: FramedWrite<WriteHalf<TcpStream>, MqCodec>,
     ) -> MqSession {
+        let pk = PublicKey::from_slice(&pk).unwrap();
         MqSession {
+            pub_key: pk,
             addr,
             framed,
-            id: 0,
             hb: Instant::now(),
         }
     }
@@ -131,7 +131,7 @@ impl MqSession {
                 println!("Client heartbeat failed, disconnecting!");
 
                 // notify MQ server
-                act.addr.do_send(server::Disconnect { id: act.id });
+                act.addr.do_send(server::Disconnect {});
 
                 // stop actor
                 ctx.stop();

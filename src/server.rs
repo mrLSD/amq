@@ -2,6 +2,7 @@ use actix::prelude::*;
 use actix::Message;
 use rand::{self, Rng};
 use std::collections::HashMap;
+use sodiumoxide::crypto::sign::ed25519::PublicKey;
 
 use crate::session;
 
@@ -43,15 +44,13 @@ impl actix::Message for Connect {
 
 /// Session is disconnected
 #[derive(Message)]
-pub struct Disconnect {
-    pub id: u64,
-}
+pub struct Disconnect;
 
 /// Send message to specific node
 #[derive(Message)]
 pub struct MqMessage {
-    /// Id of the client session
-    pub id: u64,
+    /// Node identifier
+    pub pub_key: PublicKey,
     /// Peer message
     pub msg: String,
 }
@@ -80,10 +79,7 @@ impl Handler<Disconnect> for MqServer {
     type Result = ();
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
-        println!("Handler<Disconnect> | id: {:#?}", msg.id);
-
-        // remove address
-        //self.sessions.remove(&msg.id);
+        println!("Handler<Disconnect>");
     }
 }
 
@@ -93,7 +89,7 @@ impl Handler<MqMessage> for MqServer {
 
     fn handle(&mut self, msg: MqMessage, _: &mut Context<Self>) {
         println!("Handler<Message>");
-        if let Some(addr) = self.sessions.get(&msg.id) {
+        if let Some(addr) = self.sessions.get(&msg.pub_key) {
             let message: String = format!("Response message for: {:?}", msg.msg);
             addr.do_send(session::MqSessionMessage(message.to_owned()))
         }
