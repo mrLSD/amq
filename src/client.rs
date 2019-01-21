@@ -1,8 +1,8 @@
 mod codec;
 mod sign;
 
-use toml;
 use std::fs;
+use toml;
 
 use actix::prelude::*;
 use futures::Future;
@@ -57,7 +57,7 @@ fn main() {
 
                     // Register current node
                     let addr1 = addr.clone();
-                    thread::spawn(move ||  {
+                    thread::spawn(move || {
                         let (pk, _) = sign::gen_keypair();
 
                         addr1.do_send(RegisterCommand(pk));
@@ -119,7 +119,7 @@ impl Handler<RegisterCommand> for MqClient {
 
     fn handle(&mut self, _: RegisterCommand, _: &mut Context<Self>) {
         let (pk, _) = sign::gen_keypair();
-        println!("Handler<RegisterCommand>: {}",sign::to_hex_pk(&pk));
+        println!("Handler<RegisterCommand>: {}", sign::to_hex_pk(&pk));
         self.framed.write(codec::MqRequest::Register(pk));
     }
 }

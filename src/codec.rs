@@ -3,9 +3,9 @@ use actix::Message;
 use byteorder::{BigEndian, ByteOrder};
 use bytes::{BufMut, BytesMut};
 use serde_json as json;
+use sodiumoxide::crypto::sign::ed25519::PublicKey;
 use std::io;
 use tokio_io::codec::{Decoder, Encoder};
-use sodiumoxide::crypto::sign::ed25519::PublicKey;
 
 use serde_derive::{Deserialize, Serialize};
 

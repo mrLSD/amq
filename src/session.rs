@@ -1,11 +1,11 @@
 use actix::io::{FramedWrite, WriteHandler};
 use actix::prelude::*;
 use actix::Message;
+use sodiumoxide::crypto::sign::ed25519::PublicKey;
 use std::io;
 use std::time::{Duration, Instant};
 use tokio_io::io::WriteHalf;
 use tokio_tcp::TcpStream;
-use sodiumoxide::crypto::sign::ed25519::PublicKey;
 
 use crate::codec::{MqCodec, MqRequest, MqResponse};
 use crate::server::{self, MqServer};
@@ -50,9 +50,9 @@ impl Actor for MqSession {
             .then(|res, act, ctx| {
                 match res {
                     Ok(res) => {
-//                        println!("Received ID: {}", res);
-//                        act.id = res
-                    },
+                        //                        println!("Received ID: {}", res);
+                        //                        act.id = res
+                    }
                     // something is wrong with MQ server
                     _ => ctx.stop(),
                 }
@@ -63,7 +63,7 @@ impl Actor for MqSession {
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
         // notify MQ server
-        self.addr.do_send(server::Disconnect { });
+        self.addr.do_send(server::Disconnect {});
         Running::Stop
     }
 }
@@ -78,19 +78,17 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
             MqRequest::Message(message) => {
                 // Send message to MQ server
                 println!("Peer message: {}", message);
-                self.addr.do_send(server::MqMessage {
-                    msg: message,
-                })
+                self.addr.do_send(server::MqMessage { msg: message })
             }
             // we update heartbeat time on ping from peer
             MqRequest::Ping => self.hb = { Instant::now() },
             MqRequest::Register(pk) => {
                 println!("PubKey: {}", sign::to_hex_pk(&pk));
-/*                self.addr.do_send(server::MqMessage {
+                /*                self.addr.do_send(server::MqMessage {
                     id: self.id,
                     msg: message,
                 })*/
-            },
+            }
         }
     }
 }

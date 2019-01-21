@@ -1,8 +1,8 @@
 use actix::prelude::*;
 use actix::Message;
 use rand::{self, Rng};
-use std::collections::HashMap;
 use sodiumoxide::crypto::sign::ed25519::PublicKey;
+use std::collections::HashMap;
 
 use crate::session;
 
