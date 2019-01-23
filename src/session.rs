@@ -47,11 +47,10 @@ impl Actor for MqSession {
                 addr: ctx.address(),
             })
             .into_actor(self)
-            .then(|res, act, ctx| {
+            .then(|res, _act, ctx| {
                 match res {
-                    Ok(res) => {
-                        //                        println!("Received ID: {}", res);
-                        //                        act.id = res
+                    Ok(_pk) => {
+                        // act.pub_ket = pk
                     }
                     // something is wrong with MQ server
                     _ => ctx.stop(),
@@ -80,7 +79,8 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
                 println!("Peer message: {}", message);
                 self.addr.do_send(server::MqMessage {
                     pub_key: self.pub_key,
-                    msg: message })
+                    msg: message,
+                })
             }
             // we update heartbeat time on ping from peer
             MqRequest::Ping => self.hb = { Instant::now() },
@@ -111,7 +111,7 @@ impl MqSession {
         addr: Addr<MqServer>,
         framed: FramedWrite<WriteHalf<TcpStream>, MqCodec>,
     ) -> MqSession {
-        let pk = PublicKey::from_slice(&[0;32]).unwrap();
+        let pk = PublicKey::from_slice(&[0; 32]).unwrap();
         MqSession {
             pub_key: pk,
             addr,

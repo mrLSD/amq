@@ -1,6 +1,5 @@
 use actix::prelude::*;
 use actix::Message;
-use rand::{self, Rng};
 use sodiumoxide::crypto::sign::ed25519::PublicKey;
 use std::collections::HashMap;
 
@@ -10,7 +9,7 @@ use crate::session;
 /// responsible for network nodes
 /// coordinating.
 pub struct MqServer {
-    sessions: HashMap<u64, Addr<session::MqSession>>,
+    sessions: HashMap<PublicKey, Addr<session::MqSession>>,
 }
 
 impl Default for MqServer {
@@ -61,16 +60,8 @@ pub struct MqMessage {
 impl Handler<Connect> for MqServer {
     type Result = ();
 
-    fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, _msg: Connect, _: &mut Context<Self>) -> Self::Result {
         println!("Handler<Connect>");
-        // register session with random id
-        /*let id = rand::thread_rng().gen::<u64>();
-        self.sessions.insert(id, msg.addr);
-
-        println!("Handler<Connect> | id: {:?}", id);
-
-        // Return ID
-        id*/
     }
 }
 
@@ -78,7 +69,7 @@ impl Handler<Connect> for MqServer {
 impl Handler<Disconnect> for MqServer {
     type Result = ();
 
-    fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) {
+    fn handle(&mut self, _msg: Disconnect, _: &mut Context<Self>) {
         println!("Handler<Disconnect>");
     }
 }

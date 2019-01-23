@@ -1,6 +1,6 @@
+#![allow(dead_code)]
 use hex;
 use sodiumoxide::crypto::{
-    hash::sha256,
     sign::ed25519,
     sign::ed25519::{PublicKey, SecretKey, Seed, Signature},
 };
