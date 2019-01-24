@@ -1,4 +1,5 @@
 /target
+config.toml
 **/*.rs.bk
 .idea/
 *.iml
