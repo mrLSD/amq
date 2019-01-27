@@ -1,9 +1,5 @@
-use serde::Serialize;
 use serde_derive::Serialize;
-use sodiumoxide::crypto::{
-    sign::ed25519,
-    sign::ed25519::{PublicKey, SecretKey, Seed, Signature},
-};
+use sodiumoxide::crypto::sign::ed25519::{PublicKey, SecretKey};
 use std::env;
 use std::fs;
 use toml;
@@ -47,17 +43,32 @@ fn main() {
     let mut args = env::args();
 
     // Fetch config generation parameters
-    let (config_type, config_file) = if args.len() > 3 {
+    let (config_type, config_file) = if args.len() == 3 {
+        println!("1");
         let config_type = match args.nth(1).unwrap().as_ref() {
             "node" => AppConfigType::Node,
-            _ => AppConfigType::Client,
+            "client" => AppConfigType::Client,
+            _ => {
+                eprintln!(
+                    "Wrong config type generator parameter.\nAvailable variants: node, client"
+                );
+                std::process::exit(1);
+            }
         };
         (config_type, args.nth(2).unwrap())
     } else {
         // If config type not set - get only file name arg
-        if args.len() > 2 {
+        if args.len() == 2 {
             (DEFAULT_CONFIG_TYPE, args.nth(1).unwrap())
         } else {
+            if args.len() > 3 {
+                eprintln!(
+                    "Wrong parameters count: {}\nAvailable 2 parameters",
+                    args.len()
+                );
+                std::process::exit(1);
+            }
+
             // All parameters are default
             (DEFAULT_CONFIG_TYPE, DEFAULT_CONFIG_FILE.to_string())
         }

@@ -18,6 +18,10 @@ client:
 	@echo "Run Client"
 	@cargo run --bin client
 
+config:
+	@echo "Run configurator"
+	@cargo run --bin config
+
 server:
 	@echo "Run Server"
 	@cargo run --bin server
