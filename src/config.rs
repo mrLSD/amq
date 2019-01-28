@@ -42,9 +42,10 @@ pub struct NodeConfig {
 fn main() {
     let mut args = env::args();
 
+    check_commands(&mut args);
+
     // Fetch config generation parameters
     let (config_type, config_file) = if args.len() == 3 {
-        println!("1");
         let config_type = match args.nth(1).unwrap().as_ref() {
             "node" => AppConfigType::Node,
             "client" => AppConfigType::Client,
@@ -112,4 +113,36 @@ fn generate_config_date(config_type: AppConfigType) -> String {
             toml::to_string(&cfg).unwrap()
         }
     }
+}
+
+/// Check command arguments
+fn check_commands(args: &mut env::Args) {
+    if args.len() != 3 {
+        help_message();
+        std::process::exit(1);
+    }
+    match args.nth(1).unwrap().as_ref() {
+        "node" => AppConfigType::Node,
+        "client" => AppConfigType::Client,
+        _ => {
+            help_message();
+            std::process::exit(0);
+        }
+    };
+}
+
+/// Print help message for CLI commands
+fn help_message() {
+    println!(
+        r#"
+Active MQ network config generator
+
+Usage: config [COMMAND] [FILE]
+
+Available commands:
+    node        generate config for Server Node
+    client      generate config for Client that can connect to Node
+    help        print that help
+    "#
+    );
 }
