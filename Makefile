@@ -23,9 +23,9 @@ config:
 	@cargo run --bin config node node.toml
 	@cargo run --bin config client client.toml
 
-server:
+node:
 	@echo "Run Server"
-	@cargo run --bin server
+	@cargo run --bin node
 
 build:
 	@echo Build debug version...

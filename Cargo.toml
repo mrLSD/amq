@@ -5,8 +5,8 @@ authors = ["Evgeny Ukhanov <mrlsd@ya.ru>"]
 edition = "2018"
 
 [[bin]]
-name = "server"
-path = "src/main.rs"
+name = "node"
+path = "src/node.rs"
 
 [[bin]]
 name = "client"

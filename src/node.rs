@@ -50,7 +50,29 @@ impl Handler<TcpConnect> for Server {
     }
 }
 
+/// Check command arguments
+fn check_commands() {
+    let args = std::env::args();
+    if args.len() != 2 {
+        help_message(1);
+    }
+}
+
+/// Print help message for CLI commands
+fn help_message(code: i32) {
+    println!(
+        r#"
+Actix MQ network Node
+
+Usage: node [CONFIG_FILE]
+    "#
+    );
+    std::process::exit(code);
+}
+
 fn main() {
+    check_commands();
+
     actix::System::run(|| {
         // Start server actor
         let server = MqServer::default().start();

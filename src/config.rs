@@ -35,34 +35,6 @@ pub struct NodeConfig {
     pub port: u32,
 }
 
-fn main() {
-    check_commands();
-    let mut args = env::args();
-
-    // Fetch config generation parameters
-    let (config_type, config_file) = {
-        let config_type = match args.nth(1).unwrap().as_ref() {
-            "node" => AppConfigType::Node,
-            "client" => AppConfigType::Client,
-            _ => {
-                panic!("Failed to fetch arguments");
-            }
-        };
-        (config_type, args.nth(0).unwrap())
-    };
-
-    // Generate config
-    let cfg_toml = generate_config_date(config_type);
-
-    // Get TOML config data
-    println!("{}", cfg_toml);
-
-    // Save config to file
-    if let Err(err) = fs::write(config_file, cfg_toml) {
-        eprintln!("Failed to create config file: {}", err);
-    }
-}
-
 /// Generate config data by specific ty[e
 fn generate_config_date(config_type: AppConfigType) -> String {
     let (pk, sk) = sign::gen_keypair();
@@ -113,9 +85,9 @@ fn check_commands() {
 fn help_message(code: i32) {
     println!(
         r#"
-Active MQ network config generator
+Actix MQ network config generator
 
-Usage: config [COMMAND] [FILE]
+Usage: config [COMMAND] [CONFIG_FILE]
 
 Available commands:
     node        generate config for Server Node
@@ -125,4 +97,29 @@ Available commands:
     "#
     );
     std::process::exit(code);
+}
+
+fn main() {
+    check_commands();
+    let mut args = env::args();
+
+    // Fetch config generation parameters
+    let (config_type, config_file) = {
+        let config_type = match args.nth(1).unwrap().as_ref() {
+            "node" => AppConfigType::Node,
+            "client" => AppConfigType::Client,
+            _ => {
+                panic!("Failed to fetch arguments");
+            }
+        };
+        (config_type, args.nth(0).unwrap())
+    };
+
+    // Generate config
+    let cfg_toml = generate_config_date(config_type);
+
+    // Save config to file
+    if let Err(err) = fs::write(config_file, cfg_toml) {
+        eprintln!("Failed to create config file: {}", err);
+    }
 }
