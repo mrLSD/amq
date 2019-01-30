@@ -6,6 +6,7 @@ use std::str::FromStr;
 use tokio_codec::FramedRead;
 use tokio_io::AsyncRead;
 use tokio_tcp::{TcpListener, TcpStream};
+use toml;
 
 mod codec;
 mod server;
@@ -70,8 +71,18 @@ Usage: node [CONFIG_FILE]
     std::process::exit(code);
 }
 
+/// Read config data form TOML file
+fn read_config() {
+    let mut args = std::env::args();
+    let config_file = args.nth(1).unwrap();
+
+    let config_data = std::fs::read_to_string(config_file).expect("File not found");
+    toml::from_str(&config_data);
+}
+
 fn main() {
     check_commands();
+    read_config();
 
     actix::System::run(|| {
         // Start server actor

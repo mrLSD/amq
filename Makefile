@@ -25,7 +25,7 @@ config:
 
 node:
 	@echo "Run Server"
-	@cargo run --bin node
+	@cargo run --bin node node.toml
 
 build:
 	@echo Build debug version...
