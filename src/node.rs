@@ -1,3 +1,4 @@
+use crate::types::NodeConfig;
 use actix::io::FramedWrite;
 use actix::prelude::*;
 use futures::Stream;
@@ -12,6 +13,7 @@ mod codec;
 mod server;
 mod session;
 mod sign;
+mod types;
 
 use crate::codec::MqCodec;
 use crate::server::MqServer;
@@ -77,7 +79,8 @@ fn read_config() {
     let config_file = args.nth(1).unwrap();
 
     let config_data = std::fs::read_to_string(config_file).expect("File not found");
-    toml::from_str(&config_data);
+    let _cfg: NodeConfig = toml::from_str(&config_data).expect("Failed to parse config file");
+    println!("{:#?}", _cfg);
 }
 
 fn main() {

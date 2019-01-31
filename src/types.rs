@@ -1,7 +1,7 @@
-use serde_derive::Serialize;
+use serde_derive::{Deserialize, Serialize};
 
 /// Basic Node configuration
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NodeConfig {
     pub public_key: String,
     pub secret_key: String,
@@ -9,7 +9,7 @@ pub struct NodeConfig {
 }
 
 /// Basic client config
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ClientConfig {
     pub public_key: String,
     pub secret_key: String,
@@ -17,7 +17,7 @@ pub struct ClientConfig {
 }
 
 /// Client config - node for connection
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ClientNodeConfig {
     pub public_key: String,
     pub ip: String,
