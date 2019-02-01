@@ -1,4 +1,4 @@
-use crate::types::NodeConfig;
+use crate::types::{NodeAppConfig, NodeConfig};
 use actix::io::FramedWrite;
 use actix::prelude::*;
 use futures::Stream;
@@ -74,25 +74,24 @@ Usage: node [CONFIG_FILE]
 }
 
 /// Read config data form TOML file
-fn read_config() {
+fn read_config() -> NodeConfig {
     let mut args = std::env::args();
     let config_file = args.nth(1).unwrap();
 
     let config_data = std::fs::read_to_string(config_file).expect("File not found");
-    let _cfg: NodeConfig = toml::from_str(&config_data).expect("Failed to parse config file");
-    println!("{:#?}", _cfg);
+    toml::from_str(&config_data).expect("Failed to parse config file")
 }
 
 fn main() {
     check_commands();
-    read_config();
+    let node_config = NodeAppConfig::new(&read_config());
 
     actix::System::run(|| {
         // Start server actor
-        let server = MqServer::default().start();
+        let server = MqServer::new(node_config.clone()).start();
 
         // Create server listener
-        let addr = net::SocketAddr::from_str("127.0.0.1:3000").unwrap();
+        let addr = net::SocketAddr::from_str(&format!("0.0.0.0:{:?}", node_config.port)).unwrap();
         let listener = TcpListener::bind(&addr).unwrap();
 
         // Our MQ server `Server` is an actor, first we need to start it
@@ -105,6 +104,7 @@ fn main() {
                 let addr = stream.peer_addr().unwrap();
                 TcpConnect(stream, addr)
             }));
+            let _cfg = node_config;
             Server { server: server }
         });
 

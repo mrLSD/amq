@@ -52,6 +52,12 @@ pub fn to_hex_sk(pk: &SecretKey) -> String {
     hex::encode(&pk[..])
 }
 
+/// Return SecretKey from hex string
+pub fn from_string_sk(hex: &String) -> SecretKey {
+    let sk = hex::decode(hex).unwrap();
+    SecretKey::from_slice(&sk).unwrap()
+}
+
 /*
 /// Calculates hash of a bytes slice.
 pub fn hash(data: &[u8]) -> Hash {

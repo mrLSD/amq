@@ -1,3 +1,4 @@
+use crate::types::NodeAppConfig;
 use actix::prelude::*;
 use actix::Message;
 use sodiumoxide::crypto::sign::ed25519::PublicKey;
@@ -10,12 +11,14 @@ use crate::session;
 /// coordinating.
 pub struct MqServer {
     sessions: HashMap<PublicKey, Addr<session::MqSession>>,
+    settigns: NodeAppConfig,
 }
 
-impl Default for MqServer {
-    fn default() -> MqServer {
+impl MqServer {
+    pub fn new(cfg: NodeAppConfig) -> MqServer {
         MqServer {
             sessions: HashMap::new(),
+            settigns: cfg,
         }
     }
 }
