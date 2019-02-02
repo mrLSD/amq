@@ -47,10 +47,11 @@ impl Actor for MqSession {
                 addr: ctx.address(),
             })
             .into_actor(self)
-            .then(|res, _act, ctx| {
+            .then(|res, act, ctx| {
                 match res {
-                    Ok(_pk) => {
-                        // act.pub_key = pk
+                    Ok(pk) => {
+                        // Set session pub_key
+                        act.pub_key = Some(pk);
                     }
                     // something is wrong with MQ server
                     _ => ctx.stop(),
@@ -90,11 +91,20 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
             MqRequest::Ping => self.hb = { Instant::now() },
             MqRequest::Register(pk) => {
                 println!("Register pub_key: {}", sign::to_hex_pk(&pk));
+
+                if self.pub_key.is_none() {
+                    eprintln!("Register pub_key: session pub_key not set");
+                    return;
+                }
+
+                let old_pub_key = self.pub_key.unwrap();
+                // Change old pub_key
                 self.pub_key = Some(pk);
-/*                self.addr.do_send(server::MqMessage {
-                    id: self.id,
-                    msg: message,
-                })*/
+
+                self.addr.do_send(server::MqRegister {
+                    old_pub_key: old_pub_key,
+                    pub_key: pk,
+                });
             }
         }
     }
