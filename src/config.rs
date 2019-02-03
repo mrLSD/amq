@@ -77,6 +77,8 @@ Available commands:
 }
 
 fn main() {
+    sign::init();
+
     check_commands();
     let mut args = env::args();
 

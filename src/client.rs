@@ -19,8 +19,28 @@ use sodiumoxide::crypto::sign::ed25519::PublicKey;
 
 const PING_TIME_SEC: u64 = 5;
 
+/// Check command arguments
+fn check_commands() {
+    let args = std::env::args();
+    if args.len() != 2 {
+        help_message(1);
+    }
+}
+
+/// Print help message for CLI commands
+fn help_message(code: i32) {
+    println!(
+        r#"
+Actix MQ network Client
+
+Usage: client [CONFIG_FILE]
+    "#
+    );
+    std::process::exit(code);
+}
+
 fn main() {
-    sign::init();
+    check_commands();
 
     actix::System::run(|| {
         // Connect to server
