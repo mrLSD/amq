@@ -110,8 +110,15 @@ impl Handler<MqMessage> for MqServer {
 impl Handler<MqRegister> for MqServer {
     type Result = ();
 
-    fn handle(&mut self, msg: MqRegister, _: &mut Context<Self>) {
+    fn handle(&mut self, msg: MqRegister, ctx: &mut Context<Self>) {
         println!("Handler<Register>");
+
+        // Check is Client already registered
+        if let Some(addr) = self.sessions.get(&msg.pub_key) {
+            println!("Exist");
+            addr.do_send(session::MqSessionDisconnect);
+            return;
+        }
 
         if let Some(addr) = self.sessions.get(&msg.old_pub_key) {
             self.sessions.insert(msg.pub_key, addr.to_owned());

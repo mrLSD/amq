@@ -18,6 +18,11 @@ const PING_WAIT_SEC: u64 = 15;
 #[derive(Message)]
 pub struct MqSessionMessage(pub String);
 
+/// MQ server sends this Disconnect for
+/// current session
+#[derive(Message)]
+pub struct MqSessionDisconnect;
+
 /// `MqSession` actor is responsible for tcp peer communications.
 pub struct MqSession {
     /// MQ session NodePublicKey
@@ -110,14 +115,27 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
     }
 }
 
-/// Handler for MqMessage, MqServer sends this message,
-/// we just send string to peer
+/// Handler for MqMessage, MqServer sends this message
 impl Handler<MqSessionMessage> for MqSession {
     type Result = ();
 
     fn handle(&mut self, msg: MqSessionMessage, _: &mut Self::Context) {
         // Send message to peer
         self.framed.write(MqResponse::Message(msg.0));
+    }
+}
+
+/// Handler for hard disconnect current session
+impl Handler<MqSessionDisconnect> for MqSession {
+    type Result = ();
+
+    fn handle(&mut self, _: MqSessionDisconnect, ctx: &mut Self::Context) {
+        println!("Handler<MqSessionDisconnect>");
+        // notify MQ server
+        self.addr.do_send(server::Disconnect {});
+
+        // stop actor
+        ctx.stop();
     }
 }
 
