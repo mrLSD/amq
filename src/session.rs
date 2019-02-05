@@ -27,6 +27,10 @@ pub struct MqSessionDisconnect;
 #[derive(Message)]
 pub struct MqSessionPingClient(pub PublicKey);
 
+/// Pong message for Client
+#[derive(Message)]
+pub struct MqSessionPongClient(pub PublicKey);
+
 /// `MqSession` actor is responsible for tcp peer communications.
 pub struct MqSession {
     /// MQ session NodePublicKey
@@ -172,6 +176,16 @@ impl Handler<MqSessionPingClient> for MqSession {
     fn handle(&mut self, msg: MqSessionPingClient, _: &mut Self::Context) {
         // Send Ping message to peer
         self.framed.write(MqResponse::PingClient(msg.0));
+    }
+}
+
+/// Handler for Clent Pong
+impl Handler<MqSessionPongClient> for MqSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: MqSessionPongClient, _: &mut Self::Context) {
+        // Send Pong message to peer
+        self.framed.write(MqResponse::PongClient(msg.0));
     }
 }
 

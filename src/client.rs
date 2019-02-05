@@ -206,6 +206,9 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
                 println!("PingClient");
                 self.framed.write(codec::MqRequest::PongClient(pk));
             }
+            codec::MqResponse::PongClient(pk) => {
+                println!("PongClient response: {:}", sign::to_hex_pk(&pk));
+            }
         }
     }
 }

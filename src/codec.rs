@@ -33,7 +33,10 @@ pub enum MqResponse {
     Pong,
     /// Receive Message
     Message(String),
+    /// Ping message for Client
     PingClient(PublicKey),
+    /// Pong message for Client
+    PongClient(PublicKey),
 }
 
 /// Codec for Client -> Server transport

@@ -167,9 +167,9 @@ impl Handler<MqPongClient> for MqServer {
     fn handle(&mut self, msg: MqPongClient, _: &mut Context<Self>) -> Self::Result {
         println!("Handler<MqPongClient>");
 
-        let _pub_key = msg.0;
-//        if let Some(addr) = self.sessions.get(&pub_key) {
-//            addr.do_send(session::MqSessionPingClient(pub_key));
-//        }
+        let pub_key = msg.0;
+        if let Some(addr) = self.sessions.get(&pub_key) {
+            addr.do_send(session::MqSessionPongClient(pub_key));
+        }
     }
 }
