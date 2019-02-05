@@ -62,6 +62,10 @@ pub struct MqMessage {
 #[derive(Message)]
 pub struct MqPingClient(pub PublicKey);
 
+/// Pong message for specific client
+#[derive(Message)]
+pub struct MqPongClient(pub PublicKey);
+
 /// Register client
 pub struct MqRegister {
     /// Old client identifier
@@ -122,11 +126,11 @@ impl Handler<MqMessage> for MqServer {
 impl Handler<MqRegister> for MqServer {
     type Result = MessageResult<MqRegister>;
 
-    fn handle(&mut self, msg: MqRegister, ctx: &mut Context<Self>) -> Self::Result {
+    fn handle(&mut self, msg: MqRegister, _: &mut Context<Self>) -> Self::Result {
         println!("Handler<Register>");
 
         // Check is Client already registered
-        if let Some(addr) = self.sessions.get(&msg.pub_key) {
+        if self.sessions.get(&msg.pub_key).is_some() {
             eprintln!("Client already registered - close session");
             return MessageResult(None);
         }
@@ -153,5 +157,19 @@ impl Handler<MqPingClient> for MqServer {
         if let Some(addr) = self.sessions.get(&pub_key) {
             addr.do_send(session::MqSessionPingClient(pub_key));
         }
+    }
+}
+
+/// Handler for Pong Client message.
+impl Handler<MqPongClient> for MqServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: MqPongClient, _: &mut Context<Self>) -> Self::Result {
+        println!("Handler<MqPongClient>");
+
+        let _pub_key = msg.0;
+//        if let Some(addr) = self.sessions.get(&pub_key) {
+//            addr.do_send(session::MqSessionPingClient(pub_key));
+//        }
     }
 }

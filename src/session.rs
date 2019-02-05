@@ -102,6 +102,10 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
                 println!("MqRequest::PingClient");
                 self.addr.do_send(server::MqPingClient(pk));
             }
+            MqRequest::PongClient(pk) => {
+                println!("MqRequest::PongClient");
+                self.addr.do_send(server::MqPongClient(pk));
+            }
             MqRequest::Register(pk) => {
                 if self.pub_key.is_none() {
                     eprintln!("Register pub_key: session pub_key not set");

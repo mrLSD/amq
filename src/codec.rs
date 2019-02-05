@@ -17,6 +17,8 @@ pub enum MqRequest {
     Ping,
     /// Ping client by pub_key
     PingClient(PublicKey),
+    /// Pong from client by pub_key
+    PongClient(PublicKey),
     /// Send message
     Message(String),
     /// Register request
