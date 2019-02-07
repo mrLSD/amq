@@ -1,6 +1,6 @@
 /target
-node.toml
-client.toml
+node*.toml
+client*.toml
 **/*.rs.bk
 .idea/
 *.iml

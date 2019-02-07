@@ -7,7 +7,6 @@ use crate::types::{ClientAppConfig, ClientConfig};
 use actix::prelude::*;
 use futures::stream::once;
 use futures::Future;
-use std::io::Read;
 use std::str::FromStr;
 use std::time::Duration;
 use std::{io, net, process, thread};
@@ -82,7 +81,6 @@ fn main() {
                             println!("Error: {:?}", msg);
                             return;
                         }
-                        println!("Msg: {:?}", cmd);
 
                         addr_to_send.do_send(ClientCommand(cmd));
                     });
@@ -161,6 +159,10 @@ impl Handler<ClientCommand> for MqClient {
             let v: Vec<&str> = m.splitn(2, ' ').collect();
             match v[0] {
                 "/ping" => {
+                    if v.len() < 2 {
+                        println!(">> Wrong /ping command. For help print: /help");
+                        return;
+                    }
                     match v[1] {
                         "client1" => {}
                         "client2" => {}

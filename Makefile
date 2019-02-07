@@ -14,9 +14,13 @@ test:
 check:
 	@cargo check
 
-client:
-	@echo "Run Client"
-	@cargo run --bin client client.toml
+client1:
+	@echo "Run Client 1"
+	@cargo run --bin client client1.toml
+
+client2:
+	@echo "Run Client 2"
+	@cargo run --bin client client2.toml
 
 config:
 	@echo "Run configurator"
