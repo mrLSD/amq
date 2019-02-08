@@ -104,7 +104,10 @@ impl StreamHandler<MqRequest, io::Error> for MqSession {
             MqRequest::Ping => self.hb = { Instant::now() },
             MqRequest::PingClient(pk) => {
                 println!("MqRequest::PingClient");
-                self.addr.do_send(server::MqPingClient(pk));
+                self.addr.do_send(server::MqPingClient {
+                    from: self.pub_key.unwrap(),
+                    to: pk,
+                });
             }
             MqRequest::PongClient(pk) => {
                 println!("MqRequest::PongClient");
@@ -175,6 +178,7 @@ impl Handler<MqSessionPingClient> for MqSession {
 
     fn handle(&mut self, msg: MqSessionPingClient, _: &mut Self::Context) {
         // Send Ping message to peer
+        println!("Handler<MqSessionPingClient>: {}", sign::to_hex_pk(&msg.0));
         self.framed.write(MqResponse::PingClient(msg.0));
     }
 }

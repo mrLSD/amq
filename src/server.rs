@@ -60,7 +60,10 @@ pub struct MqMessage {
 
 /// Ping message for specific client
 #[derive(Message)]
-pub struct MqPingClient(pub PublicKey);
+pub struct MqPingClient {
+    pub from: PublicKey,
+    pub to: PublicKey,
+}
 
 /// Pong message for specific client
 #[derive(Message)]
@@ -153,9 +156,8 @@ impl Handler<MqPingClient> for MqServer {
     fn handle(&mut self, msg: MqPingClient, _: &mut Context<Self>) -> Self::Result {
         println!("Handler<MqPingClient>");
 
-        let pub_key = msg.0;
-        if let Some(addr) = self.sessions.get(&pub_key) {
-            addr.do_send(session::MqSessionPingClient(pub_key));
+        if let Some(addr) = self.sessions.get(&msg.to) {
+            addr.do_send(session::MqSessionPingClient(msg.from));
         }
     }
 }

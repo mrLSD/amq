@@ -164,15 +164,25 @@ impl Handler<ClientCommand> for MqClient {
                         return;
                     }
                     match v[1] {
-                        "client1" => {}
-                        "client2" => {}
-                        _ => println!("Unknown client name. Print for help: /help"),
+                        "client1" => {
+                            let pk = sign::from_string_pk(
+                                &"b521a35da1439d86c8c5c9eb54e5bbef6500f53afb477a89c46d7e54dc77efaf"
+                                    .to_string(),
+                            );
+                            self.framed.write(codec::MqRequest::PingClient(pk));
+                        }
+                        "client2" => {
+                            let pk = sign::from_string_pk(
+                                &"7b2e20f9c6bac2033185fe5c9952d8053ccef6af30104060f3475c9be9d40e78"
+                                    .to_string(),
+                            );
+                            self.framed.write(codec::MqRequest::PingClient(pk));
+                        }
+                        _ => {
+                            println!("Unknown client name. Print for help: /help");
+                            return;
+                        }
                     }
-                    let pk = sign::from_string_pk(
-                        &"b521a35da1439d86c8c5c9eb54e5bbef6500f53afb477a89c46d7e54dc77efaf"
-                            .to_string(),
-                    );
-                    self.framed.write(codec::MqRequest::PingClient(pk));
                 }
                 "/help" => {
                     println!(
