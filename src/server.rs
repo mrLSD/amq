@@ -1,11 +1,14 @@
-use crate::sign;
 use crate::types::NodeAppConfig;
 use actix::prelude::*;
 use actix::Message;
-use sodiumoxide::crypto::sign::ed25519::PublicKey;
+use sodiumoxide::crypto::box_ as cipher;
+use sodiumoxide::crypto::sign::ed25519::{PublicKey, Signature};
 use std::collections::HashMap;
+use std::time::SystemTime;
 
+use crate::codec;
 use crate::session;
+use crate::sign;
 
 /// `MqServer` manages MQ network and
 /// responsible for network nodes
@@ -13,6 +16,19 @@ use crate::session;
 pub struct MqServer {
     sessions: HashMap<PublicKey, Addr<session::MqSession>>,
     settigns: NodeAppConfig,
+}
+
+/// Basic MQ Data
+#[derive(Debug)]
+pub struct MqData {
+    pub from: PublicKey,
+    pub to: PublicKey,
+    pub signature: Option<Signature>,
+    pub name: Option<String>,
+    pub target: codec::MessageTarget,
+    pub time: SystemTime,
+    pub nonce: Option<cipher::Nonce>,
+    pub body: String,
 }
 
 impl MqServer {

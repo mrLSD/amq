@@ -3,8 +3,8 @@ use actix::Message;
 use byteorder::{BigEndian, ByteOrder};
 use bytes::{BufMut, BytesMut};
 use serde_json as json;
-use sodiumoxide::crypto::sign::ed25519::{PublicKey, Signature};
 use sodiumoxide::crypto::box_ as cipher;
+use sodiumoxide::crypto::sign::ed25519::{PublicKey, Signature};
 use std::io;
 use std::time::SystemTime;
 use tokio_io::codec::{Decoder, Encoder};
@@ -41,10 +41,11 @@ pub enum MessageTarget {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MessageData {
     pub to: PublicKey,
-    pub signature: Signature,
+    pub signature: Option<Signature>,
     pub name: Option<String>,
     pub target: MessageTarget,
     pub time: SystemTime,
+    pub nonce: Option<cipher::Nonce>,
     pub body: String,
 }
 
