@@ -7,6 +7,8 @@ use crate::types::{ClientAppConfig, ClientConfig};
 use actix::prelude::*;
 use futures::stream::once;
 use futures::Future;
+use serde_json;
+use sodiumoxide::crypto::sign::ed25519::PublicKey;
 use std::str::FromStr;
 use std::time::Duration;
 use std::time::SystemTime;
@@ -16,8 +18,6 @@ use tokio_io::io::WriteHalf;
 use tokio_io::AsyncRead;
 use tokio_tcp::TcpStream;
 use toml;
-
-use sodiumoxide::crypto::sign::ed25519::PublicKey;
 
 const PING_TIME_SEC: u64 = 5;
 
@@ -71,6 +71,7 @@ fn main() {
                         ctx.add_message_stream(once(Ok(RegisterCommand(client_config.public_key))));
                         MqClient {
                             framed: actix::io::FramedWrite::new(w, codec::ClientMqCodec, ctx),
+                            settings: client_config,
                         }
                     });
 
@@ -96,8 +97,10 @@ fn main() {
     });
 }
 
+/// Basic MQ client data
 struct MqClient {
     framed: actix::io::FramedWrite<WriteHalf<TcpStream>, codec::ClientMqCodec>,
+    settings: ClientAppConfig,
 }
 
 #[derive(Message)]
@@ -155,7 +158,7 @@ impl Handler<ClientCommand> for MqClient {
 
         let m = msg.0.trim();
 
-        // we check for /sss type of messages
+        // we check for /command type of messages
         if m.starts_with('/') {
             let v: Vec<&str> = m.splitn(2, ' ').collect();
             let client1_pk = sign::from_string_pk(
@@ -186,7 +189,7 @@ impl Handler<ClientCommand> for MqClient {
                             self.framed.write(codec::MqRequest::Message(msg));
                         }
                         "client2" => {
-                            let msg = codec::MessageData {
+                            let mut msg = codec::MessageData {
                                 to: client2_pk,
                                 signature: None,
                                 name: None,
@@ -195,6 +198,10 @@ impl Handler<ClientCommand> for MqClient {
                                 nonce: None,
                                 body: "message for client2".to_owned(),
                             };
+                            let data = serde_json::to_string(&msg)
+                                .expect("Message should be serialize to JSON");
+                            msg.signature =
+                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key));
                             self.framed.write(codec::MqRequest::Message(msg));
                         }
                         _ => println!(">> Wrong /reqrep command. For help print: /help"),
