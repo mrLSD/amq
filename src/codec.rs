@@ -11,7 +11,6 @@ use std::time::SystemTime;
 use tokio_io::codec::{Decoder, Encoder};
 
 use crate::server;
-use crate::sign;
 
 /// Client request
 #[derive(Serialize, Deserialize, Debug, Message)]

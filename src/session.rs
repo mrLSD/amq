@@ -195,6 +195,7 @@ impl Handler<MqSessionPongClient> for MqSession {
     }
 }
 
+#[allow(dead_code)]
 impl MqSession {
     /// Basic Session initialisation
     pub fn new(

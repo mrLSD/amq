@@ -16,6 +16,7 @@ pub struct ClientConfig {
     pub public_key: String,
     pub secret_key: String,
     pub node: ClientNodeConfig,
+    pub message: ClientMessageConfig,
 }
 
 /// Client config - node for connection
@@ -24,6 +25,14 @@ pub struct ClientNodeConfig {
     pub public_key: String,
     pub ip: String,
     pub port: u32,
+}
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct ClientMessageConfig {
+    /// Should message be crypto sign
+    pub sign: bool,
+    /// Should message be encoded with crypto keys
+    pub encode: bool,
 }
 
 /// Node app config struct
@@ -40,6 +49,7 @@ pub struct ClientAppConfig {
     pub public_key: PublicKey,
     pub secret_key: SecretKey,
     pub node: ClientAppNodeConfig,
+    pub message: ClientMessageConfig,
 }
 
 /// Client app config - node for connection
@@ -51,6 +61,7 @@ pub struct ClientAppNodeConfig {
 }
 
 /// Init Node app configuration
+#[allow(dead_code)]
 impl NodeAppConfig {
     pub fn new(cfg: &NodeConfig) -> Self {
         NodeAppConfig {
@@ -62,6 +73,7 @@ impl NodeAppConfig {
 }
 
 /// Init Client app configuration
+#[allow(dead_code)]
 impl ClientAppConfig {
     pub fn new(cfg: &ClientConfig) -> Self {
         ClientAppConfig {
@@ -71,6 +83,10 @@ impl ClientAppConfig {
                 public_key: sign::from_string_pk(&cfg.node.public_key),
                 ip: cfg.node.ip.clone(),
                 port: cfg.node.port,
+            },
+            message: ClientMessageConfig {
+                sign: true,
+                encode: false,
             },
         }
     }

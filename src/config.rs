@@ -1,4 +1,4 @@
-use crate::types::{ClientConfig, ClientNodeConfig, NodeConfig};
+use crate::types::{ClientConfig, ClientMessageConfig, ClientNodeConfig, NodeConfig};
 use std::env;
 use std::fs;
 use toml;
@@ -25,6 +25,10 @@ fn generate_config_date(config_type: AppConfigType) -> String {
                     public_key: sign::to_hex_pk(&pk),
                     ip: "0.0.0.0".to_string(),
                     port: 3030,
+                },
+                message: ClientMessageConfig {
+                    sign: true,
+                    encode: false,
                 },
             };
             toml::to_string_pretty(&cfg).unwrap()

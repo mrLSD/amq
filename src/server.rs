@@ -15,11 +15,13 @@ use crate::sign;
 /// `MqServer` manages MQ network and
 /// responsible for network nodes
 /// coordinating.
+#[allow(dead_code)]
 pub struct MqServer {
     sessions: HashMap<PublicKey, Addr<session::MqSession>>,
     settigns: NodeAppConfig,
 }
 
+#[allow(dead_code)]
 impl MqServer {
     pub fn new(cfg: NodeAppConfig) -> MqServer {
         MqServer {
@@ -67,6 +69,7 @@ pub struct MqMessage {
     pub body: String,
 }
 
+#[allow(dead_code)]
 impl MqMessage {
     /// Convert message to Client message
     pub fn to_message(&self) -> codec::MessageData {
