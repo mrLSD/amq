@@ -188,14 +188,6 @@ impl Handler<ClientCommand> for MqClient {
                                 nonce: None,
                                 body: "message for client1".to_owned(),
                             };
-                            let data =
-                                json::to_string(&msg).expect("Message should be serialize to JSON");
-                            // Set message sign
-                            msg.signature = if self.settings.message.sign {
-                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key))
-                            } else {
-                                None
-                            };
 
                             if self.settings.message.encode {
                                 let (pk, sk) = box_::gen_keypair();
@@ -206,6 +198,16 @@ impl Handler<ClientCommand> for MqClient {
                                 msg.body = sign::to_hex(&encoded_msg);
                                 msg.nonce = Some(nonce);
                             }
+
+                            let data =
+                                json::to_string(&msg).expect("Message should be serialize to JSON");
+
+                            // Set message sign
+                            msg.signature = if self.settings.message.sign {
+                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key))
+                            } else {
+                                None
+                            };
 
                             self.framed.write(codec::MqRequest::Message(msg));
                         }
@@ -219,14 +221,6 @@ impl Handler<ClientCommand> for MqClient {
                                 nonce: None,
                                 body: "message for client2".to_owned(),
                             };
-                            let data = serde_json::to_string(&msg)
-                                .expect("Message should be serialize to JSON");
-                            // Set message sign
-                            msg.signature = if self.settings.message.sign {
-                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key))
-                            } else {
-                                None
-                            };
 
                             if self.settings.message.encode {
                                 let (pk, sk) = box_::gen_keypair();
@@ -237,6 +231,16 @@ impl Handler<ClientCommand> for MqClient {
                                 msg.body = sign::to_hex(&encoded_msg);
                                 msg.nonce = Some(nonce);
                             }
+
+                            let data =
+                                json::to_string(&msg).expect("Message should be serialize to JSON");
+
+                            // Set message sign
+                            msg.signature = if self.settings.message.sign {
+                                Some(sign::sign(data.as_bytes(), &self.settings.secret_key))
+                            } else {
+                                None
+                            };
 
                             self.framed.write(codec::MqRequest::Message(msg));
                         }
