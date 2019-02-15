@@ -206,21 +206,13 @@ impl Handler<ClientCommand> for MqClient {
                             };
 
                             if self.settings.message.encode {
-                                let (pk, sk) = box_::gen_keypair();
                                 let nonce = box_::gen_nonce();
-                                let encoded_msg =
-                                    box_::seal(&msg.body.as_bytes(), &nonce, &pk, &sk);
-
-                                println!(
-                                    "PubKey length: {:#?}",
-                                    self.settings.secret_key[..].len()
+                                let encoded_msg = box_::seal(
+                                    &msg.body.as_bytes(),
+                                    &nonce,
+                                    &self.settings.message.public_key,
+                                    &self.settings.message.secret_key,
                                 );
-                                println!("PubKey seal length: {:#?}", sk[..].len());
-                                println!(
-                                    "PubKey length: {:#?}",
-                                    sign::to_hex(&self.settings.secret_key[..])
-                                );
-                                println!("PubKey seal length: {:#?}", sign::to_hex(&sk[..]));
 
                                 msg.body = sign::to_hex(&encoded_msg);
                                 msg.nonce = Some(nonce);
@@ -257,10 +249,13 @@ impl Handler<ClientCommand> for MqClient {
                             };
 
                             if self.settings.message.encode {
-                                let (pk, sk) = box_::gen_keypair();
                                 let nonce = box_::gen_nonce();
-                                let encoded_msg =
-                                    box_::seal(&msg.body.as_bytes(), &nonce, &pk, &sk);
+                                let encoded_msg = box_::seal(
+                                    &msg.body.as_bytes(),
+                                    &nonce,
+                                    &self.settings.message.public_key,
+                                    &self.settings.message.secret_key,
+                                );
 
                                 msg.body = sign::to_hex(&encoded_msg);
                                 msg.nonce = Some(nonce);
@@ -334,7 +329,20 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
                 println!("is verified: {:#?}", is_verified);
 
                 // Encode message
-                if self.settings.message.encode {}
+                if self.settings.message.encode {
+                    let encoded_msg = box_::open(
+                        &sign::from_hex(&msg.body),
+                        &msg.nonce.unwrap(),
+                        &self.settings.message.public_key,
+                        &self.settings.message.secret_key,
+                    )
+                    .expect("Message should be decoded.");
+
+                    println!(
+                        "Encoded message: {:?}",
+                        std::str::from_utf8(&encoded_msg[..])
+                    );
+                }
 
                 // Send message response data
                 self.framed.write(codec::MqRequest::MessageResponse(
