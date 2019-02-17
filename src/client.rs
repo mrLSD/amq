@@ -285,11 +285,16 @@ impl Handler<ClientCommand> for MqClient {
                     let event_name = Some(v[1].to_owned());
 
                     let msg_data = json::to_string(&ClientMessageData {
-                        title: "message for client1".to_owned(),
+                        title: format!(
+                            "Public message from: {}",
+                            sign::to_hex(&self.settings.public_key[..])
+                        )
+                        .to_owned(),
                         amount: 100,
                     })
                     .expect("Message should be serialize to JSON");
 
+                    // Public message not encode message body
                     let mut msg = codec::MessageData {
                         id: Uuid::new_v4().to_string(),
                         to: None,
@@ -300,19 +305,6 @@ impl Handler<ClientCommand> for MqClient {
                         nonce: None,
                         body: msg_data,
                     };
-
-                    if self.settings.message.encode {
-                        let nonce = box_::gen_nonce();
-                        let encoded_msg = box_::seal(
-                            &msg.body.as_bytes(),
-                            &nonce,
-                            &self.settings.message.public_key,
-                            &self.settings.message.secret_key,
-                        );
-
-                        msg.body = sign::to_hex(&encoded_msg);
-                        msg.nonce = Some(nonce);
-                    }
 
                     let data = json::to_string(&msg).expect("Message should be serialize to JSON");
 
@@ -332,12 +324,6 @@ impl Handler<ClientCommand> for MqClient {
                     }
                     let event_name = Some(v[1].to_owned());
 
-                    let msg_data = json::to_string(&ClientMessageData {
-                        title: "message for client1".to_owned(),
-                        amount: 100,
-                    })
-                    .expect("Message should be serialize to JSON");
-
                     let mut msg = codec::MessageData {
                         id: Uuid::new_v4().to_string(),
                         to: None,
@@ -346,21 +332,8 @@ impl Handler<ClientCommand> for MqClient {
                         protocol: codec::MessageProtocol::Sub,
                         time: SystemTime::now(),
                         nonce: None,
-                        body: msg_data,
+                        body: String::from(""),
                     };
-
-                    if self.settings.message.encode {
-                        let nonce = box_::gen_nonce();
-                        let encoded_msg = box_::seal(
-                            &msg.body.as_bytes(),
-                            &nonce,
-                            &self.settings.message.public_key,
-                            &self.settings.message.secret_key,
-                        );
-
-                        msg.body = sign::to_hex(&encoded_msg);
-                        msg.nonce = Some(nonce);
-                    }
 
                     let data = json::to_string(&msg).expect("Message should be serialize to JSON");
 
@@ -432,7 +405,7 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
                 println!("is verified: {:#?}", is_verified);
 
                 // Encode message
-                if self.settings.message.encode {
+                if msg.protocol != codec::MessageProtocol::Pub && self.settings.message.encode {
                     let encoded_msg = box_::open(
                         &sign::from_hex(&msg.body),
                         &msg.nonce.unwrap(),
@@ -444,6 +417,9 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
                     let msg_data = std::str::from_utf8(&encoded_msg[..])
                         .expect("Message should be valid UTF8 string");
                     let client_msg: ClientMessageData = json::from_str(&msg_data).unwrap();
+                    dbg!(client_msg);
+                } else {
+                    let client_msg: ClientMessageData = json::from_str(&msg.body).unwrap();
                     dbg!(client_msg);
                 }
 
