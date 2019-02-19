@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::time::SystemTime;
 
 use crate::codec;
-use crate::codec::MessageProtocol::{Pub, Sub};
+use crate::codec::MessageProtocol::{Pub, Sub, UnSub};
 use crate::session;
 use crate::sign;
 
@@ -215,6 +215,17 @@ impl Handler<MqMessage> for MqServer {
                         event.push(msg.from);
                     } else {
                         self.events.subscribers.insert(event_name, vec![msg.from]);
+                    }
+                }
+                UnSub => {
+                    let event_name = msg.event.clone().unwrap();
+                    // Remove subscriber from specific Event
+                    if let Some(event) = self.events.subscribers.get_mut(&event_name) {
+                        let from = msg.from;
+                        let element = event.iter().position(|x| *x == from);
+                        if element.is_some() {
+                            let _ = event.remove(element.unwrap());
+                        }
                     }
                 }
                 _ => {}

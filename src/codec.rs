@@ -38,6 +38,8 @@ pub enum MessageProtocol {
     Pub,
     /// Subscribe for PUB/SUB protocol
     Sub,
+    /// Unsubscribe for PUB/SUB protocol
+    UnSub,
     /// Request / Response protocol
     ReqRep,
 }
