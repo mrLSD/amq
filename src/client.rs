@@ -346,6 +346,35 @@ impl Handler<ClientCommand> for MqClient {
 
                     self.framed.write(codec::MqRequest::Message(msg));
                 }
+                "/unsub" => {
+                    if v.len() < 2 {
+                        println!(">> Wrong /unsub command. For help print: /help");
+                        return;
+                    }
+                    let event_name = Some(v[1].to_owned());
+
+                    let mut msg = codec::MessageData {
+                        id: Uuid::new_v4().to_string(),
+                        to: None,
+                        signature: None,
+                        event: event_name,
+                        protocol: codec::MessageProtocol::UnSub,
+                        time: SystemTime::now(),
+                        nonce: None,
+                        body: String::from(""),
+                    };
+
+                    let data = json::to_string(&msg).expect("Message should be serialize to JSON");
+
+                    // Set message sign
+                    msg.signature = if self.settings.message.sign {
+                        Some(sign::sign(data.as_bytes(), &self.settings.secret_key))
+                    } else {
+                        None
+                    };
+
+                    self.framed.write(codec::MqRequest::Message(msg));
+                }
                 "/ping" => {
                     if v.len() < 2 {
                         println!(">> Wrong /ping command. For help print: /help");
@@ -381,8 +410,11 @@ impl Handler<ClientCommand> for MqClient {
     /pub [NAME]         send PUB message for specific channel name.
                         Example: /pub my.public.channel
 
-    /sub [NAME]         send SUB message to subscrive to specific channel name.
+    /sub [NAME]         send SUB message to subscribe for specific channel name.
                         Example: /sub my.public.channel
+
+    /unsub [NAME]       send UNSUB message to unsubscrive from specific channel name.
+                        Example: /unsub my.public.channel
 
                 "#
                     );

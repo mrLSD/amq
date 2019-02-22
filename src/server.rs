@@ -195,7 +195,9 @@ impl Handler<MqMessage> for MqServer {
         println!("Handler<Message>");
         let msg_data = msg.clone();
         // Send message and set message status response
-        let status = if (msg.protocol == Pub || msg.protocol == Sub) && msg.event.is_some() {
+        let status = if (msg.protocol == Pub || msg.protocol == Sub || msg.protocol == UnSub)
+            && msg.event.is_some()
+        {
             match msg.protocol {
                 Pub => {
                     let event_name = msg.event.clone().unwrap();
