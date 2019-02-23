@@ -104,7 +104,7 @@ fn main() {
                 let addr = stream.peer_addr().unwrap();
                 TcpConnect(stream, addr)
             }));
-            Server { server: server }
+            Server { server }
         });
 
         println!("Running MQ server...");
