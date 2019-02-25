@@ -1,8 +1,18 @@
 [package]
-name = "actix-mq-network"
-version = "0.1.0"
-authors = ["Evgeny Ukhanov <mrlsd@ya.ru>"]
+name = "amq"
+version = "0.2.0"
 edition = "2018"
+authors = ["Evgeny Ukhanov <mrlsd@ya.ru>"]
+description = "Message Queue framework based on Acix for Rust"
+readme = "README.md"
+keywords = ["message", "queue", "network", "security", "actor", "futures", "actix", "async", "tokio"]
+repository = "https://github.com/irony-rust/amq.git"
+categories = ["message-queue", "security", "network-programming", "asynchronous"]
+license = "MIT"
+exclude = [".gitignore", ".travis.yml", ".cargo/config", "appveyor.yml"]
+
+[workspace]
+members = ["examples/node"]
 
 [[bin]]
 name = "node"

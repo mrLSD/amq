@@ -1,0 +1,8 @@
+[package]
+name = "amq-node"
+version = "0.1.0"
+authors = ["Evgeny Ukhanov <mrlsd@ya.ru>"]
+edition = "2018"
+description = "Full Node example for Actix Message Queue library"
+
+[dependencies]
