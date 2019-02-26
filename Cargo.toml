@@ -11,6 +11,11 @@ categories = ["message-queue", "security", "network-programming", "asynchronous"
 license = "MIT"
 exclude = [".gitignore", ".travis.yml", ".cargo/config", "appveyor.yml"]
 
+
+[badges]
+travis-ci = { repository = "irony-rust/amq", branch = "master" }
+codecov = { repository = "irony-rust/amq", branch = "master", service = "github" }
+
 [workspace]
 members = ["examples/node"]
 
