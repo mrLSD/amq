@@ -14,6 +14,9 @@ test:
 check:
 	@cargo check
 
+check-examples:
+	@cargo check --examples
+
 client1:
 	@echo "Run Client 1"
 	@cargo run --bin client client1.toml

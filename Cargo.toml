@@ -15,20 +15,20 @@ exclude = [".gitignore", ".travis.yml", ".cargo/config", "appveyor.yml"]
 travis-ci = { repository = "irony-rust/amq", branch = "master" }
 codecov = { repository = "irony-rust/amq", branch = "master", service = "github" }
 
-[workspace]
-members = ["examples/node"]
+[lib]
+name = "amq"
+path = "src/lib.rs"
 
-[[bin]]
-name = "node"
-path = "src/node.rs"
+#[workspace]
+#members = ["examples/node"]
 
-[[bin]]
-name = "client"
-path = "src/client.rs"
+#[[bin]]
+#name = "client"
+#path = "src/client.rs"
 
-[[bin]]
-name = "config"
-path = "src/config.rs"
+#[[bin]]
+#name = "config"
+#path = "src/config.rs"
 
 [dependencies]
 actix = "0.7"
