@@ -1,14 +1,15 @@
-mod codec;
-mod server;
-mod session;
-mod sign;
-mod types;
-
+use crate::codec::{
+    ClientMqCodec, MessageData,
+    MessageProtocol::{Pub, ReqRep, Sub, UnSub},
+    MqRequest, MqResponse, MqResponse,
+};
+use crate::server;
+use crate::sign;
 use crate::types::{ClientAppConfig, ClientConfig};
 
-use crate::codec::MessageProtocol::ReqRep;
 use actix::prelude::*;
 use futures::{stream::once, Future};
+use log::info;
 use serde_derive::{Deserialize, Serialize};
 use serde_json as json;
 use sodiumoxide::crypto::box_;
@@ -21,90 +22,18 @@ use tokio_codec::FramedRead;
 use tokio_io::io::WriteHalf;
 use tokio_io::AsyncRead;
 use tokio_tcp::TcpStream;
-use toml;
 use uuid::Uuid;
 
 const PING_TIME_SEC: u64 = 5;
 
-/// Check command arguments
-fn check_commands() {
-    let args = std::env::args();
-    if args.len() != 2 {
-        help_message(1);
-    }
+/// Basic type for MQ Client
+pub struct MqClient {
+    pub config: NodeAppConfig,
 }
 
-/// Print help message for CLI commands
-fn help_message(code: i32) {
-    println!(
-        r#"
-Actix MQ network Client
-
-Usage: client [CONFIG_FILE]
-    "#
-    );
-    std::process::exit(code);
-}
-
-/// Read config data form TOML file
-fn read_config() -> ClientConfig {
-    let mut args = std::env::args();
-    let config_file = args.nth(1).unwrap();
-
-    let config_data = std::fs::read_to_string(config_file).expect("File not found");
-    toml::from_str(&config_data).expect("Failed to parse config file")
-}
-
-fn main() {
-    check_commands();
-    let client_config = ClientAppConfig::new(&read_config());
-
-    actix::System::run(move || {
-        // Connect to server
-        let addr = net::SocketAddr::from_str(&format!(
-            "{}:{:?}",
-            client_config.node.ip, client_config.node.port
-        ))
-        .unwrap();
-
-        Arbiter::spawn(
-            TcpStream::connect(&addr)
-                .and_then(move |stream| {
-                    let addr = MqClient::create(move |ctx| {
-                        let (r, w) = stream.split();
-                        ctx.add_stream(FramedRead::new(r, codec::ClientMqCodec));
-                        ctx.add_message_stream(once(Ok(RegisterCommand(client_config.public_key))));
-                        MqClient {
-                            framed: actix::io::FramedWrite::new(w, codec::ClientMqCodec, ctx),
-                            settings: client_config,
-                        }
-                    });
-
-                    // Start console loop
-                    let addr_to_send = addr.clone();
-                    thread::spawn(move || loop {
-                        let mut cmd = String::new();
-                        if let Err(msg) = io::stdin().read_line(&mut cmd) {
-                            println!("Error: {:?}", msg);
-                            return;
-                        }
-
-                        addr_to_send.do_send(ClientCommand(cmd));
-                    });
-
-                    futures::future::ok(())
-                })
-                .map_err(|e| {
-                    println!("Can not connect to server: {:?}", e);
-                    process::exit(1)
-                }),
-        );
-    });
-}
-
-/// Basic MQ client data
-struct MqClient {
-    framed: actix::io::FramedWrite<WriteHalf<TcpStream>, codec::ClientMqCodec>,
+/// Basic MQ client connection data
+struct MqClientConnection {
+    framed: actix::io::FramedWrite<WriteHalf<TcpStream>, ClientMqCodec>,
     settings: ClientAppConfig,
 }
 
@@ -121,7 +50,8 @@ struct ClientCommand(String);
 #[derive(Message)]
 struct RegisterCommand(PublicKey);
 
-impl Actor for MqClient {
+/// MQ ClientCommand actor
+impl Actor for MqClientConnection {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Context<Self>) {
@@ -130,7 +60,7 @@ impl Actor for MqClient {
     }
 
     fn stopping(&mut self, _: &mut Context<Self>) -> Running {
-        println!("Disconnected");
+        info!("Disconnected");
 
         // Stop application on disconnect
         System::current().stop();
@@ -139,10 +69,69 @@ impl Actor for MqClient {
     }
 }
 
+/// Basic  MQ Client implementation
 impl MqClient {
+    /// Init New node struct with config data
+    pub fn new(cfg: &NodeConfig) -> Self {
+        Self {
+            config: NodeAppConfig::new(cfg),
+        }
+    }
+
+    /// Dial Client connection to Node
+    pub fn dial(&self) {
+        actix::System::run(move || {
+            // Connect to server
+            let addr = net::SocketAddr::from_str(&format!(
+                "{}:{:?}",
+                client_config.node.ip, client_config.node.port
+            ))
+            .unwrap();
+
+            Arbiter::spawn(
+                TcpStream::connect(&addr)
+                    .and_then(move |stream| {
+                        let addr = MqClient::create(move |ctx| {
+                            let (r, w) = stream.split();
+                            ctx.add_stream(FramedRead::new(r, ClientMqCodec));
+                            ctx.add_message_stream(once(Ok(RegisterCommand(
+                                client_config.public_key,
+                            ))));
+                            MqClientConnection {
+                                framed: actix::io::FramedWrite::new(w, ClientMqCodec, ctx),
+                                settings: client_config,
+                            }
+                        });
+
+                        // Start console loop
+                        let addr_to_send = addr.clone();
+                        thread::spawn(move || loop {
+                            let mut cmd = String::new();
+                            if let Err(msg) = io::stdin().read_line(&mut cmd) {
+                                println!("Error: {:?}", msg);
+                                return;
+                            }
+
+                            addr_to_send.do_send(ClientCommand(cmd));
+                        });
+
+                        futures::future::ok(())
+                    })
+                    .map_err(|e| {
+                        println!("Can not connect to server: {:?}", e);
+                        process::exit(1)
+                    }),
+            );
+        });
+    }
+}
+
+/// Basic Mq Client Connection implementations
+impl MqClientConnection {
+    /// Heard beat flow for Ping connections
     fn hb(&self, ctx: &mut Context<Self>) {
         ctx.run_later(Duration::new(PING_TIME_SEC, 0), |act, ctx| {
-            act.framed.write(codec::MqRequest::Ping);
+            act.framed.write(MqRequest::Ping);
             act.hb(ctx);
         });
     }
@@ -157,7 +146,7 @@ impl Handler<RegisterCommand> for MqClient {
     fn handle(&mut self, msg: RegisterCommand, _: &mut Context<Self>) {
         let pk = msg.0;
         println!("Handler<RegisterCommand>: {}", sign::to_hex_pk(&pk));
-        self.framed.write(codec::MqRequest::Register(pk));
+        self.framed.write(MqRequest::Register(pk));
     }
 }
 
@@ -195,12 +184,12 @@ impl Handler<ClientCommand> for MqClient {
                             })
                             .expect("Message should be serialize to JSON");
 
-                            let mut msg = codec::MessageData {
+                            let mut msg = MessageData {
                                 id: Uuid::new_v4().to_string(),
                                 to: Some(client1_pk),
                                 signature: None,
                                 event: None,
-                                protocol: codec::MessageProtocol::ReqRep,
+                                protocol: ReqRep,
                                 time: SystemTime::now(),
                                 nonce: None,
                                 body: msg_data,
@@ -229,7 +218,7 @@ impl Handler<ClientCommand> for MqClient {
                                 None
                             };
 
-                            self.framed.write(codec::MqRequest::Message(msg));
+                            self.framed.write(MqRequest::Message(msg));
                         }
                         "client2" => {
                             let msg_data = json::to_string(&ClientMessageData {
@@ -238,12 +227,12 @@ impl Handler<ClientCommand> for MqClient {
                             })
                             .expect("Message should be serialize to JSON");
 
-                            let mut msg = codec::MessageData {
+                            let mut msg = MessageData {
                                 id: Uuid::new_v4().to_string(),
                                 to: Some(client2_pk),
                                 signature: None,
                                 event: None,
-                                protocol: codec::MessageProtocol::ReqRep,
+                                protocol: ReqRep,
                                 time: SystemTime::now(),
                                 nonce: None,
                                 body: msg_data,
@@ -272,7 +261,7 @@ impl Handler<ClientCommand> for MqClient {
                                 None
                             };
 
-                            self.framed.write(codec::MqRequest::Message(msg));
+                            self.framed.write(MqRequest::Message(msg));
                         }
                         _ => println!(">> Wrong /reqrep command. For help print: /help"),
                     }
@@ -295,12 +284,12 @@ impl Handler<ClientCommand> for MqClient {
                     .expect("Message should be serialize to JSON");
 
                     // Public message not encode message body
-                    let mut msg = codec::MessageData {
+                    let mut msg = MessageData {
                         id: Uuid::new_v4().to_string(),
                         to: None,
                         signature: None,
                         event: event_name,
-                        protocol: codec::MessageProtocol::Pub,
+                        protocol: Pub,
                         time: SystemTime::now(),
                         nonce: None,
                         body: msg_data,
@@ -315,7 +304,7 @@ impl Handler<ClientCommand> for MqClient {
                         None
                     };
 
-                    self.framed.write(codec::MqRequest::Message(msg));
+                    self.framed.write(MqRequest::Message(msg));
                 }
                 "/sub" => {
                     if v.len() < 2 {
@@ -324,12 +313,12 @@ impl Handler<ClientCommand> for MqClient {
                     }
                     let event_name = Some(v[1].to_owned());
 
-                    let mut msg = codec::MessageData {
+                    let mut msg = MessageData {
                         id: Uuid::new_v4().to_string(),
                         to: None,
                         signature: None,
                         event: event_name,
-                        protocol: codec::MessageProtocol::Sub,
+                        protocol: Sub,
                         time: SystemTime::now(),
                         nonce: None,
                         body: String::from(""),
@@ -344,7 +333,7 @@ impl Handler<ClientCommand> for MqClient {
                         None
                     };
 
-                    self.framed.write(codec::MqRequest::Message(msg));
+                    self.framed.write(MqRequest::Message(msg));
                 }
                 "/unsub" => {
                     if v.len() < 2 {
@@ -353,12 +342,12 @@ impl Handler<ClientCommand> for MqClient {
                     }
                     let event_name = Some(v[1].to_owned());
 
-                    let mut msg = codec::MessageData {
+                    let mut msg = MessageData {
                         id: Uuid::new_v4().to_string(),
                         to: None,
                         signature: None,
                         event: event_name,
-                        protocol: codec::MessageProtocol::UnSub,
+                        protocol: UnSub,
                         time: SystemTime::now(),
                         nonce: None,
                         body: String::from(""),
@@ -373,7 +362,7 @@ impl Handler<ClientCommand> for MqClient {
                         None
                     };
 
-                    self.framed.write(codec::MqRequest::Message(msg));
+                    self.framed.write(MqRequest::Message(msg));
                 }
                 "/ping" => {
                     if v.len() < 2 {
@@ -382,10 +371,10 @@ impl Handler<ClientCommand> for MqClient {
                     }
                     match v[1] {
                         "client1" => {
-                            self.framed.write(codec::MqRequest::PingClient(client1_pk));
+                            self.framed.write(MqRequest::PingClient(client1_pk));
                         }
                         "client2" => {
-                            self.framed.write(codec::MqRequest::PingClient(client2_pk));
+                            self.framed.write(MqRequest::PingClient(client2_pk));
                         }
                         _ => {
                             println!("Unknown client name. Print for help: /help");
@@ -428,16 +417,16 @@ impl Handler<ClientCommand> for MqClient {
 }
 
 /// Server communication
-impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
-    fn handle(&mut self, msg: codec::MqResponse, _: &mut Context<Self>) {
+impl StreamHandler<MqResponse, io::Error> for MqClient {
+    fn handle(&mut self, msg: MqResponse, _: &mut Context<Self>) {
         match msg {
-            codec::MqResponse::Message(mut msg) => {
+            MqResponse::Message(mut msg) => {
                 let is_verified = msg.verify();
                 println!("message: {:#?}", msg);
                 println!("is verified: {:#?}", is_verified);
 
                 // Encode message
-                if msg.protocol != codec::MessageProtocol::Pub && self.settings.message.encode {
+                if msg.protocol != Pub && self.settings.message.encode {
                     let encoded_msg = box_::open(
                         &sign::from_hex(&msg.body),
                         &msg.nonce.unwrap(),
@@ -457,24 +446,23 @@ impl StreamHandler<codec::MqResponse, io::Error> for MqClient {
 
                 // Send message response data for ReqRep
                 if msg.protocol == ReqRep {
-                    self.framed.write(codec::MqRequest::MessageResponse(
-                        server::MqMessageResponse {
+                    self.framed
+                        .write(MqRequest::MessageResponse(server::MqMessageResponse {
                             from: msg.from,
                             to: msg.to,
                             status: server::MessageSendStatus::Received,
-                        },
-                    ));
+                        }));
                 }
             }
-            codec::MqResponse::Pong => {}
-            codec::MqResponse::PingClient(pk) => {
+            MqResponse::Pong => {}
+            MqResponse::PingClient(pk) => {
                 println!("PingClient");
-                self.framed.write(codec::MqRequest::PongClient(pk));
+                self.framed.write(MqRequest::PongClient(pk));
             }
-            codec::MqResponse::PongClient(pk) => {
+            MqResponse::PongClient(pk) => {
                 println!("PongClient response: {:}", sign::to_hex_pk(&pk));
             }
-            codec::MqResponse::MessageResponseStatus(status) => {
+            MqResponse::MessageResponseStatus(status) => {
                 println!("MessageResponseStatus: {:#?}", status);
             }
         }

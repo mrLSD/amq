@@ -1,4 +1,3 @@
-use crate::types::{NodeAppConfig, NodeConfig};
 use actix::io::FramedWrite;
 use actix::prelude::*;
 use futures::Stream;
@@ -12,6 +11,7 @@ use tokio_tcp::{TcpListener, TcpStream};
 use crate::codec::MqCodec;
 use crate::server::MqServer;
 use crate::session::MqSession;
+use crate::types::{NodeAppConfig, NodeConfig};
 
 /// Define tcp server that will accept incoming tcp
 /// connection and create MQ actors.
@@ -47,12 +47,12 @@ impl Handler<TcpConnect> for Server {
     }
 }
 
-/// MqNode - basic type for MQ Node
+/// Basic type for MQ Node
 pub struct MqNode {
     pub config: NodeAppConfig,
 }
 
-/// MqNode - basic Node implementaion
+/// Basic Node implementation
 impl MqNode {
     /// Init New node struct with config data
     pub fn new(cfg: &NodeConfig) -> Self {
