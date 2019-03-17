@@ -1,4 +1,4 @@
-# Actix MQ network
+# Actix MQ frameworkvir
 [![Build Status](https://travis-ci.org/irony-rust/amq.svg?branch=master)](https://travis-ci.org/irony-rust/amq)
 [![codecov](https://codecov.io/gh/irony-rust/amq/branch/master/graph/badge.svg)](https://codecov.io/gh/irony-rust/amq)
 
