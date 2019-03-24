@@ -1,7 +1,7 @@
 use crate::codec::{
     ClientMqCodec, MessageData,
     MessageProtocol::{Pub, ReqRep, Sub, UnSub},
-    MqRequest, MqResponse, MqResponse,
+    MqRequest, MqResponse,
 };
 use crate::server;
 use crate::sign;
@@ -28,7 +28,7 @@ const PING_TIME_SEC: u64 = 5;
 
 /// Basic type for MQ Client
 pub struct MqClient {
-    pub config: NodeAppConfig,
+    pub config: ClientAppConfig,
 }
 
 /// Basic MQ client connection data
@@ -72,14 +72,15 @@ impl Actor for MqClientConnection {
 /// Basic  MQ Client implementation
 impl MqClient {
     /// Init New node struct with config data
-    pub fn new(cfg: &NodeConfig) -> Self {
+    pub fn new(cfg: &ClientConfig) -> Self {
         Self {
-            config: NodeAppConfig::new(cfg),
+            config: ClientAppConfig::new(cfg),
         }
     }
 
     /// Dial Client connection to Node
     pub fn dial(&self) {
+        let client_config = self.config.clone();
         actix::System::run(move || {
             // Connect to server
             let addr = net::SocketAddr::from_str(&format!(
@@ -91,7 +92,7 @@ impl MqClient {
             Arbiter::spawn(
                 TcpStream::connect(&addr)
                     .and_then(move |stream| {
-                        let addr = MqClient::create(move |ctx| {
+                        let addr = MqClientConnection::create(move |ctx| {
                             let (r, w) = stream.split();
                             ctx.add_stream(FramedRead::new(r, ClientMqCodec));
                             ctx.add_message_stream(once(Ok(RegisterCommand(
@@ -137,10 +138,10 @@ impl MqClientConnection {
     }
 }
 
-impl actix::io::WriteHandler<io::Error> for MqClient {}
+impl actix::io::WriteHandler<io::Error> for MqClientConnection {}
 
 /// Handle Register commands
-impl Handler<RegisterCommand> for MqClient {
+impl Handler<RegisterCommand> for MqClientConnection {
     type Result = ();
 
     fn handle(&mut self, msg: RegisterCommand, _: &mut Context<Self>) {
@@ -151,7 +152,7 @@ impl Handler<RegisterCommand> for MqClient {
 }
 
 /// Handle stdin commands
-impl Handler<ClientCommand> for MqClient {
+impl Handler<ClientCommand> for MqClientConnection {
     type Result = ();
 
     fn handle(&mut self, msg: ClientCommand, _: &mut Context<Self>) {
@@ -417,7 +418,7 @@ impl Handler<ClientCommand> for MqClient {
 }
 
 /// Server communication
-impl StreamHandler<MqResponse, io::Error> for MqClient {
+impl StreamHandler<MqResponse, io::Error> for MqClientConnection {
     fn handle(&mut self, msg: MqResponse, _: &mut Context<Self>) {
         match msg {
             MqResponse::Message(mut msg) => {
